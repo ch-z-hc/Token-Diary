@@ -183,7 +183,8 @@ function build() {
 }
 function getDay(date) {
   const index = read(path.join(DIR, "index.json"), { dates: [], sources: {} });
-  const d = read(path.join(DIR, "days", date + ".json"), {
+  const known = index.dates.some((day) => day.date === date);
+  const empty = {
     date,
     ...ZERO(),
     agents: {},
@@ -191,8 +192,9 @@ function getDay(date) {
     models: {},
     activities: [],
     sessionCount: 0,
-  });
-  const summary = read(path.join(DIR, "summaries.json"))[date];
+  };
+  const d = known ? read(path.join(DIR, "days", date + ".json"), empty) : empty;
+  const summary = known ? read(path.join(DIR, "summaries.json"))[date] : null;
   return {
     index,
     day: d,

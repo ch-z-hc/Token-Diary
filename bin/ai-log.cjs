@@ -146,7 +146,10 @@ async function main() {
       break;
     case "export": {
       const index = read(path.join(DIR, "index.json"), { dates: [] });
-      const summaries = read(path.join(DIR, "summaries.json"));
+      const saved = read(path.join(DIR, "summaries.json"));
+      const summaries = Object.fromEntries(
+        index.dates.filter((day) => saved[day.date]).map((day) => [day.date, saved[day.date]]),
+      );
       if (values.format === "markdown") {
         console.log("# Token Diary\n");
         for (const day of index.dates)

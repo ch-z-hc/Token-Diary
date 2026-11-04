@@ -262,6 +262,36 @@ let server;
     console.log(
       "PASS CLI exports reusable JSON and Markdown without live model calls",
     );
+    const { atomic, getDay } = require("../src/core.cjs");
+    atomic(path.join(DIR, "summaries.json"), {
+      "2026-01-02": { text: "REMOVED_SOURCE_REVIEW", sourceHash: "old" },
+    });
+    atomic(path.join(DIR, "period-summaries.json"), {
+      "month:2026-01": { text: "REMOVED_PERIOD_REVIEW", hash: "old" },
+    });
+    assert.match(require("../src/view.cjs").render("2026-01-02", "", ""), /Review 已停止生成，保留已有回顾/);
+    fs.writeFileSync(file, JSON.stringify({ ...snapshot, events: [], sessions: [] }));
+    config.sources = [{ id: "replacement", type: "file", path: file }];
+    index = await collect(config);
+    assert.equal(index.dates.length, 0);
+    // Old cache files may remain on disk, but no longer belong to the current index.
+    assert(fs.existsSync(path.join(DIR, "days", "2026-01-02.json")));
+    assert.equal(getDay("2026-01-02").day.total, 0);
+    assert.equal(getDay("2026-01-02").summary, null);
+    for (const kind of ["week", "month", "year", "total"]) {
+      assert.equal(getPeriod(kind, "2026-01-02").day.total, 0);
+      assert.equal(getPeriod(kind, "2026-01-02").summary, null);
+      const body = await (await fetch(base + "/ai/?period=" + kind + "&date=2026-01-02")).text();
+      assert(!body.includes("REMOVED_"));
+    }
+    const removedExport = spawnSync(process.execPath, ["bin/ai-log.cjs", "export"], {
+      cwd: path.join(__dirname, ".."), encoding: "utf8",
+    });
+    assert.equal(removedExport.status, 0, removedExport.stderr);
+    assert.deepEqual(JSON.parse(removedExport.stdout).summaries, {});
+    assert.equal(JSON.parse(removedExport.stdout).dates.length, 0);
+    console.log("PASS removed sources invalidate daily/period views and exported reviews");
+
   } finally {
     if (server) await new Promise((resolve) => server.close(resolve));
     fs.rmSync(root, { recursive: true, force: true });

@@ -162,10 +162,12 @@ function getPeriod(kind, date) {
   const base = getDay(date),
     range = bounds(kind, date),
     key = kind + ":" + range.id;
+  const periodIndex = read(path.join(DIR, "period-index.json"), { periods: [] });
+  const known = periodIndex.periods.some((period) => period.key === key);
   const d =
-      read(path.join(DIR, "periods", key.replace(":", "_") + ".json"), null) ||
+      (known && read(path.join(DIR, "periods", key.replace(":", "_") + ".json"), null)) ||
       merge(kind, date, []),
-    summary = read(path.join(DIR, "period-summaries.json"))[key];
+    summary = known ? read(path.join(DIR, "period-summaries.json"))[key] : null;
   return {
     ...base,
     day: d,
@@ -173,7 +175,7 @@ function getPeriod(kind, date) {
       ? { ...summary, stale: summary.hash !== d.sourceHash }
       : null,
     worker: read(path.join(DIR, "period-state.json")),
-    periodIndex: read(path.join(DIR, "period-index.json"), { periods: [] }),
+    periodIndex,
   };
 }
 module.exports = {

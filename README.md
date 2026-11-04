@@ -4,7 +4,7 @@
 
 Token Diary 把分散在不同工具和设备上的 AI 使用记录汇集起来：看见每天的用量，也留下任务、进展和回顾，让一次次对话成为可以翻阅的日志。
 
-![Token Diary 年度热力墙，使用演示数据](docs/home.png)
+![Token Diary 年度热力墙，使用演示数据](docs/home-full-year.png)
 
 ## 看见使用的节奏
 

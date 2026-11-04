@@ -19,7 +19,7 @@ if (values.config) process.env.AI_LOG_CONFIG = path.resolve(values.config);
 if (values["data-dir"])
   process.env.AI_LOG_DIR = path.resolve(values["data-dir"]);
 const command = positionals[0] || "help";
-const help = `AI Log — local AI usage and work journal
+const help = `Token Diary — local AI usage and work journal
 
   ai-log init                  Write a stats-only configuration
   ai-log collect               Scan configured local/SSH/WSL/file sources
@@ -148,7 +148,7 @@ async function main() {
       const index = read(path.join(DIR, "index.json"), { dates: [] });
       const summaries = read(path.join(DIR, "summaries.json"));
       if (values.format === "markdown") {
-        console.log("# AI Log\n");
+        console.log("# Token Diary\n");
         for (const day of index.dates)
           console.log(
             "## " +
@@ -184,6 +184,6 @@ async function main() {
   }
 }
 main().catch((e) => {
-  console.error("AI Log: " + e.message);
+  console.error("Token Diary: " + e.message);
   process.exitCode = 1;
 });

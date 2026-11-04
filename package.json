@@ -1,7 +1,7 @@
 {
-  "name": "@ch-z-hc/ai-log",
+  "name": "@ch-z-hc/token-diary",
   "version": "0.1.0",
-  "description": "Local-first AI token usage journal with cross-device collection, activity heatmap and optional work reviews.",
+  "description": "A diary of your AI usage, tasks and progress across tools and devices.",
   "license": "MIT",
   "author": "ch-z-hc",
   "engines": {
@@ -26,12 +26,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ch-z-hc/ai-log.git"
+    "url": "git+https://github.com/ch-z-hc/Token-Diary.git"
   },
   "bugs": {
-    "url": "https://github.com/ch-z-hc/ai-log/issues"
+    "url": "https://github.com/ch-z-hc/Token-Diary/issues"
   },
-  "homepage": "https://github.com/ch-z-hc/ai-log#readme",
+  "homepage": "https://github.com/ch-z-hc/Token-Diary#readme",
   "keywords": [
     "ai",
     "tokens",

@@ -19,10 +19,10 @@ const validDate = (date) =>
 const css = `:root{color-scheme:light;--font-ui:ui-monospace,SFMono-Regular,Consolas,monospace;--soft:#f0f6fc;--muted:#687582;--rule:#e5e7eb;--border:#ccd1d8;--link:#0969da}*{box-sizing:border-box}body{margin:0;background:#fff;color:#20252a;font:16px/1.7 system-ui,sans-serif}header{display:flex;justify-content:space-between;align-items:center;max-width:1000px;margin:auto;padding:25px 28px;border-bottom:1px dashed var(--rule)}header>a{color:inherit;font-family:var(--font-ui);font-size:24px;font-weight:700}a{color:var(--link);text-decoration:none}a:hover{text-decoration:underline}main{max-width:1000px;margin:auto;padding:32px 28px}h1,h2,h3{font-family:var(--font-ui)}.summary-picker>label{display:block;font-size:23px}.summary-controls{display:flex;gap:20px;align-items:center}.summary-controls input{flex:1;min-width:0;border:0;border-bottom:1px dashed var(--border);border-radius:0;padding:12px 0;background:transparent;font:inherit}.summary-controls button{border:0;background:none;color:var(--link);font:inherit;padding:12px;cursor:pointer}.hint{color:var(--muted);font-size:13px}.intro{text-align:center;margin:20px 0 40px}.home-links{display:flex;justify-content:center;gap:24px;margin:32px 0}.home-total{text-align:center;font-family:var(--font-ui);font-size:30px;margin:30px 0}.home-total small{font:14px system-ui;display:block;color:var(--muted)}@media(max-width:600px){main{padding:24px 16px}header{padding:18px 16px}.intro{margin:8px 0 28px}}`;
 function layout(body) {
   return (
-    '<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>AI Log</title><style>' +
+    '<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>Token Diary</title><style>' +
     css +
     heatmap.CSS +
-    '</style></head><body><header><a href="/">AI Log</a><nav><a href="/ai/">Usage</a> · <a href="/ai/status/">采集状态</a></nav></header><main>' +
+    '</style></head><body><header><a href="/">Token Diary</a><nav><a href="/ai/">Usage</a> · <a href="/ai/status/">采集状态</a></nav></header><main>' +
     body +
     "</main></body></html>"
   );
@@ -122,7 +122,7 @@ async function serve({ port = 4317 } = {}) {
     server.once("error", reject);
     server.listen(port, "127.0.0.1", resolve);
   });
-  console.log("AI Log: http://127.0.0.1:" + server.address().port);
+  console.log("Token Diary: http://127.0.0.1:" + server.address().port);
   return server;
 }
 module.exports = { createServer, serve, validDate, layout };

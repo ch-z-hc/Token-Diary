@@ -223,7 +223,7 @@ let server;
       assert.equal(response.status, 200);
       const body = await response.text();
       assert(!body.includes("PRIVATE_SENTINEL"));
-      assert(body.includes("AI Log"));
+      assert(body.includes("Token Diary"));
       if (url === "/") assert(body.includes("ai-heatmap-days"));
       else assert(!body.includes('class="ai-heatmap-days"'));
     }

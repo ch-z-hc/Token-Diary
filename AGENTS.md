@@ -1,4 +1,4 @@
-# AI Log maintenance
+# Token Diary maintenance
 
 ## Owner's standing instruction
 
@@ -6,7 +6,7 @@ When the owner requests an update to **this project**, implement it, run the rel
 
 ## Scope
 
-AI Log is a local-first AI token usage and work journal. The repository is independent of any personal website, Diary data, private authentication, specific machines or deployment paths. Keep private integrations outside this public repository.
+Token Diary (formerly AI Log) is a local-first AI token usage and work journal. The repository is independent of any personal website, Diary data, private authentication, specific machines or deployment paths. Keep private integrations outside this public repository.
 
 - Node.js 24+, CommonJS; no runtime npm dependencies.
 - `bin/ai-log.cjs`: CLI and environment setup before requiring core modules.
@@ -15,6 +15,11 @@ AI Log is a local-first AI token usage and work journal. The repository is indep
 - `src/core.cjs`, `periods.cjs`: inclusive token normalization, aliases and calendar aggregates.
 - `src/reviews.cjs`: explicit model opt-in, child-summary reuse, fingerprints and input/call budgets.
 - `src/server.cjs`, `view.cjs`, `heatmap.cjs`: read-only loopback dashboard; heatmap is Home-only.
+
+## Naming and README
+
+- Public repository: `ch-z-hc/Token-Diary`. The owner chose **Token Diary** on 2026-11-05. Keep existing `ai-log` CLI commands, filenames, environment variables and data paths compatible.
+- README should explain the product, supported workflows and screenshots. Do not put a technology-stack overview or implementation/storage details there; installation and configuration belong in `docs/guide.md`, technical details in the other docs.
 
 ## Invariants
 

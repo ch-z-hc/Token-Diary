@@ -1,0 +1,25 @@
+{
+  "timezone": "Asia/Shanghai",
+  "captureText": false,
+  "sources": [
+    { "id": "local", "name": "This computer", "type": "local" },
+    { "id": "laptop", "name": "Laptop", "type": "ssh", "host": "my-laptop" },
+    {
+      "id": "laptop-wsl",
+      "name": "Laptop WSL",
+      "type": "wsl",
+      "host": "my-laptop",
+      "distro": "Ubuntu",
+      "user": "sample"
+    }
+  ],
+  "review": {
+    "enabled": false,
+    "provider": "codex",
+    "command": "codex",
+    "model": "gpt-6.1-sol",
+    "maxInputChars": 24000,
+    "maxCallsPerRun": 5,
+    "maxCallsPerDay": 20
+  }
+}

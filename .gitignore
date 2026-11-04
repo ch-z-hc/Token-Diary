@@ -1,0 +1,16 @@
+node_modules/
+coverage/
+*.tgz
+.env
+.env.*
+config.json
+data/
+.cache/
+*.db
+*.sqlite*
+*.jsonl
+*.jsonl.zst
+*.json.gz
+*.log
+*.lock
+.DS_Store

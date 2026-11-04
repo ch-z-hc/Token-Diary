@@ -1,0 +1,44 @@
+{
+  "name": "@ch-z-hc/ai-log",
+  "version": "0.1.0",
+  "description": "Local-first AI token usage journal with cross-device collection, activity heatmap and optional work reviews.",
+  "license": "MIT",
+  "author": "ch-z-hc",
+  "engines": {
+    "node": ">=24"
+  },
+  "bin": {
+    "ai-log": "bin/ai-log.cjs"
+  },
+  "main": "src/core.cjs",
+  "files": [
+    "bin/",
+    "src/",
+    "docs/",
+    "examples/",
+    "README.md",
+    "LICENSE",
+    "AGENTS.md"
+  ],
+  "scripts": {
+    "test": "node test/run.cjs",
+    "start": "node bin/ai-log.cjs serve"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ch-z-hc/ai-log.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ch-z-hc/ai-log/issues"
+  },
+  "homepage": "https://github.com/ch-z-hc/ai-log#readme",
+  "keywords": [
+    "ai",
+    "tokens",
+    "codex",
+    "claude-code",
+    "journal",
+    "self-hosted",
+    "heatmap"
+  ]
+}

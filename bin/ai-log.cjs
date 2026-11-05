@@ -202,6 +202,15 @@ async function main() {
                 ? "Token 未知"
                 : day.total + " tokens") +
               (day.messages ? " · " + day.messages + " 条聊天消息" : "") +
+              (day.estimatedMessages
+                ? "\n\nChatGPT 可见文本 token 估算：输入 " +
+                  day.estimatedInput +
+                  " · 输出 " +
+                  day.estimatedOutput +
+                  " · 合计 " +
+                  day.estimatedTotal +
+                  "（与实测用量分开）"
+                : "") +
               "\n\n" +
               (summaries[day.date]?.text || "") +
               "\n",

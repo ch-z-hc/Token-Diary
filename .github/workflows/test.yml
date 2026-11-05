@@ -20,5 +20,6 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install tzdata
+      - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: npm test
       - run: npm pack --dry-run

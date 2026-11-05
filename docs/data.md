@@ -15,7 +15,7 @@
 
 跨设备以响应 ID / 别名去重。不能无条件推断两个没有稳定标识的记录是同一次请求；格式变化或缺少 ID 时可能存在不可避免的误差。设备维度将去重后的事件归给来源配置顺序中首次出现的设备，并不证明实际发起设备。
 
-日期以配置的 IANA 时区零点划分。会话数按 Agent + session ID 去重；周期调用数和 token 加总每日去重结果。缺失日志不视作零，也不从上下文长度、账户配额或文字长度推算 token。
+日期以配置的 IANA 时区零点划分。会话数按 Agent + session ID 去重；周期调用数和 token 加总每日去重结果。缺失日志不视作零，也不从上下文长度、账户配额或文字长度推算实测 token。
 
 空行、已确认截断且不含 usage 标记的 task_started 元数据静默跳过。损坏用量记录、未知坏行和真实连接失败仍计入状态，便于识别缺失。
 
@@ -26,6 +26,12 @@
 标准化事件的 `kind` 为 `chat-message`，含 `role` 与 `tokensKnown`。没有明确 usage 时 token 字段为 `null`；聚合中的 input/output/total 仅为已测得部分之和，`messages` / `userMessages` / `assistantMessages` 与 `unknownUsage` 独立保存。`requests` 仍只计有明确 usage 的调用，不能把用户消息数当模型调用数。仅有未知聊天用量的日期在界面显示“未知”，不能根据内部的已知部分之和为 0 就称没有消耗。
 
 只有明确的助手 usage 同时提供非负整数 input_tokens/output_tokens 才计入实测用量；缓存与推理继续作为其子集。聊天文字仅在 captureText 开启时存为受限摘录，才能参与既有 Review；统计和导入均不调用模型。
+
+可见文本另外提供本地 token 估算，使用固定的 `o200k_base` 编码（`js-tiktoken`），不调用模型。每条可见用户消息记为 `estimatedInput`，每条可见助手消息记为 `estimatedOutput`，另一方向为 0；`estimateEncoding` 记录编码。计数使用原始完整字符串部分，早于摘录脱敏及截断；多个字符串部分以换行连接，特殊 token 字样按普通文本编码。图片、音频、工具输出、隐藏消息和推理文本不参与。
+
+聚合另存 `estimatedInput` / `estimatedOutput` / `estimatedTotal` 与 `estimatedMessages`，日和长周期都保持独立。旧快照没有这些字段时表示尚未估算，重新导入原始导出即可补齐；不能把缺失的估算显示成已知 0。统计模式仅持久化数字，不保存原文。JSON 与 Markdown 导出分别保留实测和估算。
+
+这是每条可见消息各计一次的文本量，无法还原服务端真实输入：未计算历史上下文重发、系统提示、消息封装、内部推理或多模态消耗，也不保证导出所用模型采用此编码。估算不替换未知实测值、不进入实测合计和热力图，也不用于判断费用。仅补齐数字不会改变 Review 源指纹。
 
 ## 文件布局
 

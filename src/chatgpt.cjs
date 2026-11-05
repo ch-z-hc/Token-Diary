@@ -211,6 +211,11 @@ function parse(
       const model = String(
         metadata.model_slug || c.default_model_slug || "unknown",
       ).slice(0, 200);
+      const visibleText = (Array.isArray(content.parts) ? content.parts : [])
+        .filter((p) => typeof p === "string")
+        .join("\n");
+      const { ENCODING, countText } = require("./text-tokens.cjs");
+      const estimated = countText(visibleText);
       events.push({
         id: key,
         day: date,
@@ -220,6 +225,9 @@ function parse(
         kind: "chat-message",
         role,
         tokensKnown: !!known,
+        estimatedInput: role === "user" ? estimated : 0,
+        estimatedOutput: role === "assistant" ? estimated : 0,
+        estimateEncoding: ENCODING,
         input: known ? usage.input_tokens : null,
         output: known ? usage.output_tokens : null,
         cached: known
@@ -256,11 +264,7 @@ function parse(
           };
           groups.set(groupKey, g);
         }
-        const text = clean(
-          (Array.isArray(content.parts) ? content.parts : [])
-            .filter((p) => typeof p === "string")
-            .join("\n"),
-        );
+        const text = clean(visibleText);
         if (text) {
           const list = role === "user" ? g.requests : g.results;
           if (!list.includes(text)) list.push(text);

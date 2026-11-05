@@ -44,9 +44,13 @@ function sum(a, b) {
     "userMessages",
     "assistantMessages",
     "unknownUsage",
+    "estimatedInput",
+    "estimatedOutput",
+    "estimatedMessages",
   ])
     a[k] += b[k] || 0;
   a.total = a.input + a.output;
+  a.estimatedTotal = a.estimatedInput + a.estimatedOutput;
 }
 function merge(kind, date, days) {
   const range = bounds(kind, date),

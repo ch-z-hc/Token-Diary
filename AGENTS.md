@@ -8,7 +8,7 @@ When the owner requests an update to **this project**, implement it, run the rel
 
 Token-Diary (formerly AI Log) is a local-first AI token usage and work journal. The repository is independent of any personal website, Diary data, private authentication, specific machines or deployment paths. Keep private integrations outside this public repository.
 
-- Node.js 24+, CommonJS; no runtime npm dependencies.
+- Node.js 24+, CommonJS; `js-tiktoken` is a pinned local tokenizer dependency. Run `npm ci` before running from a checkout.
 - `bin/ai-log.cjs`: CLI and environment setup before requiring core modules.
 - `src/scanner.cjs`, `scan-wsl.py`: source-side read-only scanners; Python WSL fallback is Codex-only.
 - `src/collector.cjs`: local/SSH/WSL/file/ChatGPT export sources and private snapshots.
@@ -26,6 +26,7 @@ Token-Diary (formerly AI Log) is a local-first AI token usage and work journal. 
 
 ## Invariants
 
+- ChatGPT visible-text estimates use local `o200k_base` on full original visible string parts, once per message: user = estimated input, assistant = estimated output. Aggregate estimates separately, track coverage, never add them to measured totals or heatmaps, and never change Review fingerprints for numeric estimates. Stats-only imports retain counts, not text.
 - ChatGPT import keeps unknown token fields null; messages and unknown assistant usage are separate counters. Never drop text-only chat activity or publish unknown usage as a measured zero. Source snapshots are export-based, not live account synchronization. Tests use synthetic exports only.
 - Default `captureText=false` and `review.enabled=false`. Stats-only scanners and their caches must never retain task excerpts. Do not implement this only by hiding UI.
 - Total tokens = inclusive input + inclusive output. Cache input and reasoning output are subsets, not additional totals.

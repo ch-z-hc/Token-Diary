@@ -15,12 +15,28 @@ const ZERO = () => ({
   userMessages: 0,
   assistantMessages: 0,
   unknownUsage: 0,
+  estimatedInput: 0,
+  estimatedOutput: 0,
+  estimatedTotal: 0,
+  estimatedMessages: 0,
 });
 function add(a, b) {
   if (b.kind === "chat-message") {
     a.messages++;
     if (b.role === "user") a.userMessages++;
     if (b.role === "assistant") a.assistantMessages++;
+    if (
+      b.estimateEncoding === "o200k_base" &&
+      Number.isSafeInteger(b.estimatedInput) &&
+      b.estimatedInput >= 0 &&
+      Number.isSafeInteger(b.estimatedOutput) &&
+      b.estimatedOutput >= 0
+    ) {
+      a.estimatedInput += b.estimatedInput;
+      a.estimatedOutput += b.estimatedOutput;
+      a.estimatedTotal = a.estimatedInput + a.estimatedOutput;
+      a.estimatedMessages++;
+    }
     if (!b.tokensKnown) {
       if (b.role === "assistant") a.unknownUsage++;
       return a;
@@ -186,6 +202,10 @@ function build() {
         userMessages,
         assistantMessages,
         unknownUsage,
+        estimatedInput,
+        estimatedOutput,
+        estimatedTotal,
+        estimatedMessages,
       }) => ({
         date,
         total,
@@ -198,6 +218,10 @@ function build() {
         userMessages,
         assistantMessages,
         unknownUsage,
+        estimatedInput,
+        estimatedOutput,
+        estimatedTotal,
+        estimatedMessages,
       }),
     )
     .sort((a, b) => b.date.localeCompare(a.date));

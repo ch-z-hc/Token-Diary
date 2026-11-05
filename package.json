@@ -40,5 +40,8 @@
     "journal",
     "self-hosted",
     "heatmap"
-  ]
+  ],
+  "dependencies": {
+    "js-tiktoken": "1.0.21"
+  }
 }

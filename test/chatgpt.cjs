@@ -11,6 +11,7 @@ const { parse, scan } = require("../src/chatgpt.cjs"),
   { aggregate, atomic, DIR, read } = require("../src/core.cjs"),
   { merge, buildPeriods } = require("../src/periods.cjs"),
   { normalize } = require("../src/collector.cjs");
+const { countText, ENCODING } = require("../src/text-tokens.cjs");
 const node = (id, parent, role, type, text, time, metadata = {}) => ({
   id,
   parent,
@@ -107,7 +108,54 @@ function zip(entries) {
 }
 (async () => {
   try {
+    for (const [text, tokens] of [
+      ["", 0],
+      ["hello world", 2],
+      ["你好世界", 2],
+      ["const x = 42;", 6],
+      ["🙂", 1],
+      ["<|endoftext|>", 7],
+    ])
+      assert.equal(countText(text), tokens);
     let data = parse([[c]], { timezone: "Asia/Shanghai" });
+    const inputEstimate = countText(c.mapping.user.message.content.parts[0]);
+    const outputEstimate = countText(c.mapping.answer.message.content.parts[0]);
+    assert.deepEqual(
+      data.events.map((e) => [
+        e.estimatedInput,
+        e.estimatedOutput,
+        e.estimateEncoding,
+      ]),
+      [
+        [inputEstimate, 0, ENCODING],
+        [0, outputEstimate, ENCODING],
+      ],
+    );
+    const long = structuredClone(c);
+    const full =
+      "```js\nconst x = 42;\n```\nhttps://example.com/path " +
+      "完整可见文本🙂 ".repeat(600);
+    long.mapping.user.message.content.parts = [
+      full,
+      { asset_pointer: "IGNORE_ATTACHMENT" },
+      "second part",
+    ];
+    const longStats = parse([[long]]),
+      longText = parse([[long]], { captureText: true });
+    assert.equal(
+      longStats.events[0].estimatedInput,
+      countText(full + "\nsecond part"),
+    );
+    assert.deepEqual(longStats.events, longText.events);
+    assert(longText.sessions[0].requests[0].length <= 1400);
+    assert(!JSON.stringify(longStats).includes("完整可见文本"));
+    assert(
+      longStats.events[0].estimatedInput >
+        countText(longText.sessions[0].requests[0]),
+    );
+    console.log(
+      "PASS local tokenizer vectors, full untruncated visible text, role split and no text retained by default",
+    );
     assert.equal(data.events.length, 2);
     assert.equal(data.sessions.length, 0);
     assert(!JSON.stringify(data).includes("PRIVATE_"));
@@ -199,6 +247,35 @@ function zip(entries) {
       captureText: false,
     });
     assert.equal(normalized.sessions.length, 0);
+    assert.equal(normalized.events[0].estimatedInput, inputEstimate);
+    const oldSnapshot = structuredClone(imported);
+    for (const e of oldSnapshot.events)
+      for (const k of ["estimatedInput", "estimatedOutput", "estimateEncoding"])
+        delete e[k];
+    assert.equal(
+      normalize(oldSnapshot, { timezone: "Asia/Shanghai", captureText: false })
+        .events[0].estimatedInput,
+      undefined,
+    );
+    assert.equal(
+      aggregate([{ name: "Legacy", data: oldSnapshot }]).days["2024-02-28"]
+        .estimatedMessages,
+      0,
+    );
+    for (const invalid of [
+      { estimatedInput: -1 },
+      { estimatedInput: 1.5 },
+      { estimatedOutput: 1 },
+      { estimateEncoding: "unsupported" },
+      { estimatedInput: null },
+    ]) {
+      const bad = structuredClone(imported);
+      Object.assign(bad.events[0], invalid);
+      assert.throws(
+        () => normalize(bad, { timezone: "Asia/Shanghai", captureText: false }),
+        /estimate/,
+      );
+    }
     assert(normalized.events.every((e) => e.input === null));
     const snapshots = [
         { name: "Export", data: imported },
@@ -216,6 +293,25 @@ function zip(entries) {
     assert.equal(period.requests, 0);
     assert.equal(period.sessionCount, 1);
     assert.equal(period.source.length, 2);
+    assert.equal(period.estimatedInput, inputEstimate);
+    assert.equal(period.estimatedOutput, outputEstimate);
+    assert.equal(period.estimatedTotal, inputEstimate + outputEstimate);
+    assert.equal(period.estimatedMessages, 2);
+    for (const kind of ["week", "year", "total"]) {
+      const p = merge(kind, "2024-02-29", Object.values(result.days));
+      assert.equal(p.estimatedTotal, period.estimatedTotal);
+      assert.equal(p.total, 0);
+    }
+    const legacyDays = aggregate([{ name: "Export", data: oldSnapshot }]).days;
+    for (const [date, d] of Object.entries(result.days))
+      assert.equal(d.sourceHash, legacyDays[date].sourceHash);
+    assert.equal(
+      period.sourceHash,
+      merge("month", "2024-02-29", Object.values(legacyDays)).sourceHash,
+    );
+    console.log(
+      "PASS independent estimate aggregation, dedup, legacy snapshots and unchanged Review fingerprints",
+    );
     console.log(
       "PASS unknown token events retain chat counts, cross-day sessions and Review inputs without counted usage",
     );
@@ -229,6 +325,7 @@ function zip(entries) {
       { name: "Export", data: parse([[known]]) },
     ]).days;
     assert.equal(withKnown["2024-02-29"].total, 120);
+    assert.equal(withKnown["2024-02-29"].estimatedOutput, outputEstimate);
     assert.equal(withKnown["2024-02-29"].unknownUsage, 0);
     console.log(
       "PASS explicitly recorded usage counts once; user messages are not model calls",
@@ -244,6 +341,22 @@ function zip(entries) {
     const html = require("../src/view.cjs").render("2024-02-29", "", "", "day");
     assert(html.includes("<strong>未知</strong>"));
     assert(html.includes("ai-chat-notice"));
+    assert(
+      html.includes('class="ai-chat-estimates"') ||
+        html.includes('class="ai-section ai-chat-estimates"'),
+    );
+    const estimates = html.match(
+      /<div class="ai-estimate-grid">(.*?)<\/div><p class="ai-state">/s,
+    )[1];
+    assert.deepEqual(
+      [...estimates.matchAll(/<strong>(.*?)<\/strong>/g)].map((m) => m[1]),
+      [outputEstimate, 0, outputEstimate].map(String),
+    );
+    const measured = html.match(
+      /<section class="ai-stats"[^>]*>(.*?)<\/section>/s,
+    )[1];
+    assert.equal([...measured.matchAll(/<strong>未知<\/strong>/g)].length, 3);
+    assert(html.includes("实测合计"));
     assert(html.includes("PRIVATE_RESULT") === false);
     assert(html.includes("ChatGPT"));
     assert(html.includes("会话主题"));
@@ -292,6 +405,24 @@ function zip(entries) {
         .gunzipSync(fs.readFileSync(path.join(DIR, "chatgpt.json.gz")))
         .toString()
         .includes("PRIVATE_"),
+    );
+    const exported = spawnSync(
+      process.execPath,
+      ["bin/ai-log.cjs", "export", "--format", "markdown"],
+      { cwd: path.join(__dirname, ".."), env: process.env, encoding: "utf8" },
+    );
+    assert.equal(exported.status, 0, exported.stderr);
+    assert(
+      exported.stdout.includes(
+        "ChatGPT 可见文本 token 估算：输入 " + inputEstimate,
+      ),
+    );
+    assert.equal(
+      read(path.join(DIR, "index.json")).dates.reduce(
+        (s, d) => s + d.estimatedTotal,
+        0,
+      ),
+      inputEstimate + outputEstimate,
     );
     console.log(
       "PASS CLI import persists source config, remains idempotent and invokes no model",

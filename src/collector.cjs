@@ -38,6 +38,24 @@ function normalize(raw, config) {
       result.kind = e.kind;
       result.role = e.role;
       result.tokensKnown = e.tokensKnown;
+      if (
+        ["estimatedInput", "estimatedOutput", "estimateEncoding"].some(
+          (k) => e[k] !== undefined,
+        )
+      ) {
+        if (
+          e.estimateEncoding !== "o200k_base" ||
+          !Number.isSafeInteger(e.estimatedInput) ||
+          e.estimatedInput < 0 ||
+          !Number.isSafeInteger(e.estimatedOutput) ||
+          e.estimatedOutput < 0 ||
+          (e.role === "user" ? e.estimatedOutput !== 0 : e.estimatedInput !== 0)
+        )
+          throw new Error("Invalid visible-text token estimate");
+        result.estimatedInput = e.estimatedInput;
+        result.estimatedOutput = e.estimatedOutput;
+        result.estimateEncoding = e.estimateEncoding;
+      }
     }
     result.aliases = (Array.isArray(e.aliases) ? e.aliases : []).map(text);
     for (const k of ["input", "cached", "cacheWrite", "output", "reasoning"]) {

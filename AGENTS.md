@@ -1,4 +1,4 @@
-# Token Diary maintenance
+# Token-Diary maintenance
 
 ## Owner's standing instruction
 
@@ -6,7 +6,7 @@ When the owner requests an update to **this project**, implement it, run the rel
 
 ## Scope
 
-Token Diary (formerly AI Log) is a local-first AI token usage and work journal. The repository is independent of any personal website, Diary data, private authentication, specific machines or deployment paths. Keep private integrations outside this public repository.
+Token-Diary (formerly AI Log) is a local-first AI token usage and work journal. The repository is independent of any personal website, Diary data, private authentication, specific machines or deployment paths. Keep private integrations outside this public repository.
 
 - Node.js 24+, CommonJS; no runtime npm dependencies.
 - `bin/ai-log.cjs`: CLI and environment setup before requiring core modules.
@@ -18,7 +18,7 @@ Token Diary (formerly AI Log) is a local-first AI token usage and work journal. 
 
 ## Naming and README
 
-- Public repository: `ch-z-hc/Token-Diary`. The owner chose **Token Diary** on 2026-11-05. Keep existing `ai-log` CLI commands, filenames, environment variables and data paths compatible.
+- Public repository: `ch-z-hc/Token-Diary`. The owner chose **Token-Diary** on 2026-11-05. Keep existing `ai-log` CLI commands, filenames, environment variables and data paths compatible.
 - README should explain the product, supported workflows and screenshots. Do not put a technology-stack overview or implementation/storage details there; installation and configuration belong in `docs/guide.md`, technical details in the other docs.
 - README demonstration screenshots use the owner’s website typography: Maple for Latin text/numbers and LXGW WenKai for Chinese. Render synthetic data, wait for webfonts to load and verify the actual rendered fonts before capture. Keep font files and owner-specific preview paths outside this repository unless runtime font support is explicitly requested.
 - The Home heatmap preview (`docs/home-full-year.png`) should show a complete past calendar year with synthetic activity across all 12 months, natural variation and a few gaps. Preserve exact totals for the synthetic records; never fill real missing or future usage to decorate a screenshot.

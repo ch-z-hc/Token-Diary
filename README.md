@@ -1,10 +1,10 @@
-# Token Diary
+# Token-Diary
 
 记录你与 AI 一起做过的事。
 
-Token Diary 把分散在不同工具和设备上的 AI 使用记录汇集起来：看见每天的用量，也留下任务、进展和回顾，让一次次对话成为可以翻阅的日志。
+Token-Diary 把分散在不同工具和设备上的 AI 使用记录汇集起来：看见每天的用量，也留下任务、进展和回顾，让一次次对话成为可以翻阅的日志。
 
-![Token Diary 年度热力墙，使用演示数据](docs/home-full-year.png)
+![Token-Diary 年度热力墙，使用演示数据](docs/home-full-year.png)
 
 ## 看见使用的节奏
 
@@ -14,9 +14,9 @@ Token Diary 把分散在不同工具和设备上的 AI 使用记录汇集起来�
 
 ## 留下做过的事
 
-开启 Review 后，Token Diary 会把会话中的任务意图、报告的结果和待办整理成简短回顾，帮助你找到当时在做什么、哪些工作还在继续。
+开启 Review 后，Token-Diary 会把会话中的任务意图、报告的结果和待办整理成简短回顾，帮助你找到当时在做什么、哪些工作还在继续。
 
-![Token Diary 每日用量与回顾，使用演示数据](docs/daily.png)
+![Token-Diary 每日用量与回顾，使用演示数据](docs/daily.png)
 
 | 回顾 | 更新方式 |
 | --- | --- |

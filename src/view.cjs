@@ -35,6 +35,7 @@ const LABELS = {
 };
 const url = (date, kind = "day") =>
   "/ai/?date=" + date + (kind === "day" ? "" : "&period=" + kind);
+const agentName = name => ({"AI Log（自动回顾）": "AI Log", "Diary Summary（自动生成）": "Diary Summary"})[name] || name;
 function token(key, u, includeEstimates = true) {
   const field = {
     input: "estimatedInput",
@@ -65,7 +66,7 @@ function rows(items) {
     .sort((a, b) => b[1].total - a[1].total)
     .map(
       ([name, u]) =>
-        `<tr><th scope="row">${esc(name)}</th><td>${token("input", u)}</td><td>${token("cached", u)}</td><td>${token("output", u)}</td><td>${token("total", u)}</td></tr>`,
+        `<tr><th scope="row">${esc(agentName(name))}</th><td>${token("input", u)}</td><td>${token("cached", u)}</td><td>${token("output", u)}</td><td>${token("total", u)}</td></tr>`,
     )
     .join("");
 }
@@ -184,7 +185,7 @@ function render(date, picker, script, kind = "day") {
           (x) =>
             !x.startsWith("# Files mentioned") && !/^[-\w]+ 20\d\d-/.test(x),
         ) || a.requestsText[0];
-      return `<li><div class="ai-topic-head"><span>${esc(a.agent)}${a.project ? " · " + esc(a.project) : ""}</span><span>${a.messages ? token("total", a) : short(a.total)}</span></div>${text ? `<p>${esc(text.slice(0, 180))}${text.length > 180 ? "…" : ""}</p>` : '<p class="hint">会话未保存可用文本</p>'}<small>${esc(a.devices.join(" / "))} · ${a.messages ? fmt(a.messages) + " 条聊天消息" : fmt(a.requests) + " 次调用"}</small></li>`;
+      return `<li><div class="ai-topic-head"><span>${esc(agentName(a.agent))}${a.project ? " · " + esc(a.project) : ""}</span><span>${a.messages ? token("total", a) : short(a.total)}</span></div>${text ? `<p>${esc(text.slice(0, 180))}${text.length > 180 ? "…" : ""}</p>` : '<p class="hint">会话未保存可用文本</p>'}<small>${esc(a.devices.join(" / "))} · ${a.messages ? fmt(a.messages) + " 条聊天消息" : fmt(a.requests) + " 次调用"}</small></li>`;
     })
     .join("");
   const range = daily
@@ -237,7 +238,7 @@ function renderStatus() {
           .filter((a) => a.status !== "not-found")
           .map(
             (a) =>
-              `<li>${esc(a.agent)} · ${status(a.status)}${a.events !== undefined ? " · " + fmt(a.events) + " 条" : ""}</li>`,
+              `<li>${esc(agentName(a.agent))} · ${status(a.status)}${a.events !== undefined ? " · " + fmt(a.events) + " 条" : ""}</li>`,
           )
           .join("")}</ul></div>`,
     )

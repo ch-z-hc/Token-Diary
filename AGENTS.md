@@ -19,6 +19,8 @@ Token-Diary (formerly AI Log) is a local-first AI token usage and work journal. 
 
 ## Naming and README
 
+- Display automation agents as `AI Log` and `Diary Summary`, without parenthetical suffixes. Keep stored identifiers unchanged so cosmetic renaming does not invalidate Review caches.
+
 - Keep dashboard copy to headings, figures and short status labels. Do not add explanatory paragraphs about estimation limits, measured totals, caching or offline behavior; keep those details in the docs. ChatGPT excerpts participate in Review even when actual usage is unknown.
 
 - Public repository: `ch-z-hc/Token-Diary`. The owner chose **Token-Diary** on 2026-11-05. Keep existing `ai-log` CLI commands, filenames, environment variables and data paths compatible.

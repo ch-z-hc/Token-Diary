@@ -346,7 +346,7 @@ function zip(entries) {
         html.includes('class="ai-section ai-chat-estimates"'),
     );
     const estimates = html.match(
-      /<div class="ai-estimate-grid">(.*?)<\/div><p class="ai-state">/s,
+      /<div class="ai-estimate-grid">(.*?)<\/div><\/section>/s,
     )[1];
     assert.deepEqual(
       [...estimates.matchAll(/<strong>(.*?)<\/strong>/g)].map((m) => m[1]),

@@ -11,7 +11,8 @@ Token-Diary (formerly AI Log) is a local-first AI token usage and work journal. 
 - Node.js 24+, CommonJS; no runtime npm dependencies.
 - `bin/ai-log.cjs`: CLI and environment setup before requiring core modules.
 - `src/scanner.cjs`, `scan-wsl.py`: source-side read-only scanners; Python WSL fallback is Codex-only.
-- `src/collector.cjs`: local/SSH/WSL/file sources and private snapshots.
+- `src/collector.cjs`: local/SSH/WSL/file/ChatGPT export sources and private snapshots.
+- `src/chatgpt.cjs`: ZIP/JSON export parser; current branch only, no reasoning, attachment extraction or text capture by default.
 - `src/core.cjs`, `periods.cjs`: inclusive token normalization, aliases and calendar aggregates.
 - `src/reviews.cjs`: explicit model opt-in, child-summary reuse, fingerprints and input/call budgets.
 - `src/server.cjs`, `view.cjs`, `heatmap.cjs`: read-only loopback dashboard; heatmap is Home-only.
@@ -25,6 +26,7 @@ Token-Diary (formerly AI Log) is a local-first AI token usage and work journal. 
 
 ## Invariants
 
+- ChatGPT import keeps unknown token fields null; messages and unknown assistant usage are separate counters. Never drop text-only chat activity or publish unknown usage as a measured zero. Source snapshots are export-based, not live account synchronization. Tests use synthetic exports only.
 - Default `captureText=false` and `review.enabled=false`. Stats-only scanners and their caches must never retain task excerpts. Do not implement this only by hiding UI.
 - Total tokens = inclusive input + inclusive output. Cache input and reasoning output are subsets, not additional totals.
 - Preserve dedup across migrated logs, aliases, cumulative/per-call records and streaming blocks. Never replace unknown usage with a fabricated estimate.

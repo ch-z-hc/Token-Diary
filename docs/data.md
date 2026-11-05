@@ -19,6 +19,14 @@
 
 空行、已确认截断且不含 usage 标记的 task_started 元数据静默跳过。损坏用量记录、未知坏行和真实连接失败仍计入状态，便于识别缺失。
 
+## ChatGPT 导出记录
+
+`chatgpt` 来源读取官方导出的 ZIP、单个 JSON 或分卷目录。以当前分支上的消息 ID 去重，按消息创建时间归日；重复分卷按会话更新时间选择较新版本。无法确定分支或损坏的记录会报告错误，不能把其它分支或思考过程当作可见对话。
+
+标准化事件的 `kind` 为 `chat-message`，含 `role` 与 `tokensKnown`。没有明确 usage 时 token 字段为 `null`；聚合中的 input/output/total 仅为已测得部分之和，`messages` / `userMessages` / `assistantMessages` 与 `unknownUsage` 独立保存。`requests` 仍只计有明确 usage 的调用，不能把用户消息数当模型调用数。仅有未知聊天用量的日期在界面显示“未知”，不能根据内部的已知部分之和为 0 就称没有消耗。
+
+只有明确的助手 usage 同时提供非负整数 input_tokens/output_tokens 才计入实测用量；缓存与推理继续作为其子集。聊天文字仅在 captureText 开启时存为受限摘录，才能参与既有 Review；统计和导入均不调用模型。
+
 ## 文件布局
 
 ```text

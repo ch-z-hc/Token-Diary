@@ -70,7 +70,7 @@ function load(file = configPath()) {
     if (!/^[a-zA-Z0-9_-]{1,64}$/.test(source.id) || ids.has(source.id))
       throw new Error("Source IDs must be unique safe filenames");
     ids.add(source.id);
-    if (!["local", "ssh", "wsl", "file"].includes(source.type))
+    if (!["local", "ssh", "wsl", "file", "chatgpt"].includes(source.type))
       throw new Error("Unsupported source type");
     if (
       (source.type === "ssh" || source.host) &&
@@ -83,7 +83,10 @@ function load(file = configPath()) {
         (source.user && !/^[a-zA-Z0-9_-]+$/.test(source.user)))
     )
       throw new Error("Invalid WSL distribution/user");
-    if (source.type === "file" && typeof source.path !== "string")
+    if (
+      ["file", "chatgpt"].includes(source.type) &&
+      typeof source.path !== "string"
+    )
       throw new Error("File source needs path");
   }
   return config;

@@ -40,6 +40,10 @@ function sum(a, b) {
     "output",
     "reasoning",
     "requests",
+    "messages",
+    "userMessages",
+    "assistantMessages",
+    "unknownUsage",
   ])
     a[k] += b[k] || 0;
   a.total = a.input + a.output;
@@ -162,10 +166,16 @@ function getPeriod(kind, date) {
   const base = getDay(date),
     range = bounds(kind, date),
     key = kind + ":" + range.id;
-  const periodIndex = read(path.join(DIR, "period-index.json"), { periods: [] });
+  const periodIndex = read(path.join(DIR, "period-index.json"), {
+    periods: [],
+  });
   const known = periodIndex.periods.some((period) => period.key === key);
   const d =
-      (known && read(path.join(DIR, "periods", key.replace(":", "_") + ".json"), null)) ||
+      (known &&
+        read(
+          path.join(DIR, "periods", key.replace(":", "_") + ".json"),
+          null,
+        )) ||
       merge(kind, date, []),
     summary = known ? read(path.join(DIR, "period-summaries.json"))[key] : null;
   return {

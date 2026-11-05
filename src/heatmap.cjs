@@ -21,9 +21,18 @@ function calendar(year, dates, through = today()) {
     start = shift(from, -weekday),
     lastWeekday = (new Date(to + "T12:00:00Z").getUTCDay() + 6) % 7,
     end = shift(to, 6 - lastWeekday);
+  const activity = new Map(
+    dates.filter((d) => d.date <= through).map((d) => [d.date, d]),
+  );
   const values = new Map(
       dates
-        .filter((d) => d.date >= from && d.date <= to && d.date <= through)
+        .filter(
+          (d) =>
+            d.date >= from &&
+            d.date <= to &&
+            d.date <= through &&
+            !(d.messages && !d.requests),
+        )
         .map((d) => [d.date, d.total]),
     ),
     positive = [...values.values()].filter((n) => n > 0).sort((a, b) => a - b),
@@ -37,7 +46,17 @@ function calendar(year, dates, through = today()) {
       known = !padding && !future && values.has(date),
       total = known ? values.get(date) : null;
     const level = total > 0 ? 1 + cuts.filter((c) => total > c).length : 0;
-    cells.push({ date, padding, future, known, total, level });
+    cells.push({
+      date,
+      padding,
+      future,
+      known,
+      total,
+      level,
+      ...(activity.get(date)?.messages
+        ? { messages: activity.get(date).messages }
+        : {}),
+    });
   }
   const months = MONTHS.map((name, i) => ({
     name,
@@ -76,10 +95,12 @@ function renderHeatmap(index, year, date, homeDate) {
           " · " +
           (d.known
             ? Number(d.total).toLocaleString("en-US") + " tokens"
-            : "暂无记录"),
+            : d.messages
+              ? "token 未知 · " + d.messages + " 条聊天消息"
+              : "暂无记录"),
         attrs = `class="ai-heatmap-cell${d.date === date ? " selected" : ""}" data-date="${d.date}" data-level="${d.level}" title="${label}" aria-label="${label}"`;
-      return d.known
-        ? `<a ${attrs} data-tokens="${d.total}" href="/ai/?date=${d.date}"></a>`
+      return d.known || d.messages
+        ? `<a ${attrs} ${d.known ? `data-tokens="${d.total}"` : ""} href="/ai/?date=${d.date}"></a>`
         : `<span ${attrs} role="img"></span>`;
     })
     .join("");

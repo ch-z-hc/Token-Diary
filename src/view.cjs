@@ -35,12 +35,20 @@ const LABELS = {
 };
 const url = (date, kind = "day") =>
   "/ai/?date=" + date + (kind === "day" ? "" : "&period=" + kind);
+function token(n, u) {
+  return u.messages && !u.requests ? "未知" : fmt(n);
+}
+function chatNotice(d) {
+  return d.messages
+    ? `<p class="ai-state ai-chat-notice">ChatGPT：${fmt(d.userMessages)} 条用户消息 · ${fmt(d.assistantMessages)} 条助手回复${d.unknownUsage || !d.requests ? "；未提供的 token 用量不计入以上数字。" : "。"}</p>`
+    : "";
+}
 function rows(items) {
   return Object.entries(items)
     .sort((a, b) => b[1].total - a[1].total)
     .map(
       ([name, u]) =>
-        `<tr><th scope="row">${esc(name)}</th><td>${fmt(u.input)}</td><td>${fmt(u.cached)}</td><td>${fmt(u.output)}</td><td>${fmt(u.total)}</td></tr>`,
+        `<tr><th scope="row">${esc(name)}</th><td>${token(u.input, u)}</td><td>${token(u.cached, u)}</td><td>${token(u.output, u)}</td><td>${token(u.total, u)}</td></tr>`,
     )
     .join("");
 }
@@ -159,7 +167,7 @@ function render(date, picker, script, kind = "day") {
           (x) =>
             !x.startsWith("# Files mentioned") && !/^[-\w]+ 20\d\d-/.test(x),
         ) || a.requestsText[0];
-      return `<li><div class="ai-topic-head"><span>${esc(a.agent)}${a.project ? " · " + esc(a.project) : ""}</span><span>${short(a.total)}</span></div>${text ? `<p>${esc(text.slice(0, 180))}${text.length > 180 ? "…" : ""}</p>` : '<p class="hint">会话未保存可用文本</p>'}<small>${esc(a.devices.join(" / "))} · ${fmt(a.requests)} 次调用</small></li>`;
+      return `<li><div class="ai-topic-head"><span>${esc(a.agent)}${a.project ? " · " + esc(a.project) : ""}</span><span>${a.messages && !a.requests ? "token 未知" : short(a.total)}</span></div>${text ? `<p>${esc(text.slice(0, 180))}${text.length > 180 ? "…" : ""}</p>` : '<p class="hint">会话未保存可用文本</p>'}<small>${esc(a.devices.join(" / "))} · ${a.messages ? fmt(a.messages) + " 条聊天消息" : fmt(a.requests) + " 次调用"}</small></li>`;
     })
     .join("");
   const range = daily
@@ -175,9 +183,9 @@ function render(date, picker, script, kind = "day") {
       ? ""
       : `<nav class="ai-day-nav" aria-label="日期导航">${previous ? `<a href="${urlAttr(url(previous.from, kind))}">← ${daily ? previous.id : "上一" + unit}</a>` : "<span></span>"}<a href="${urlAttr(url(today(), kind))}">${daily ? "Today" : kind === "year" ? "今年" : "本" + unit}</a>${next ? `<a href="${urlAttr(url(next.from, kind))}">${daily ? next.id : "下一" + unit} →</a>` : "<span></span>"}</nav>`;
   return `<style>${CSS}</style><div class="ai-log">${periodNav(date, kind)}${kind === "total" ? "" : `<form class="summary-picker ai-picker" method="get" action="/ai/"><label class="sr-only" for="ai-date">Choose a ${daily ? "Day" : { week: "Week", month: "Month", year: "Year" }[kind]}</label>${daily ? "" : `<input type="hidden" name="period" value="${kind}">`}<div class="summary-controls">${picker}<button type="submit">View</button></div></form>`}${nav}${range ? `<p class="ai-range">${range}</p>` : ""}
- <section class="ai-stats" aria-label="Token 用量"><div><small>Total tokens</small><strong>${fmt(d.total)}</strong><span>${d.sessionCount} 个会话 · ${fmt(d.requests)} 次调用${daily ? "" : " · " + d.dayCount + " 个有记录的日期"}</span></div><div><small>Input</small><strong>${fmt(d.input)}</strong><span>含缓存输入 ${fmt(d.cached)}</span></div><div><small>Output</small><strong>${fmt(d.output)}</strong><span>含推理输出 ${fmt(d.reasoning)}</span></div></section>
- <section class="ai-section"><h3>${LABELS[kind]} Review</h3>${state ? `<p class="ai-state" role="status">${state}</p>` : ""}<div class="ai-review">${summaryHTML}</div></section>
- ${d.total ? `<section class="ai-section">${table("Agent", d.agents)}${table("Device", d.devices)}${table("Model", d.models)}<small class="hint">¹ 缓存输入已计入输入；推理输出已计入输出。</small></section><section class="ai-section"><details><summary>${daily ? "会话主题" : "主要会话主题"} · ${visibleActivities.length < d.sessionCount ? visibleActivities.length + " / " : ""}${d.sessionCount}</summary><ul class="ai-topics">${topics}</ul></details></section>` : ""}
+ <section class="ai-stats" aria-label="Token 用量"><div><small>Total tokens</small><strong>${token(d.total, d)}</strong><span>${d.sessionCount} 个会话 · ${d.messages ? fmt(d.messages) + " 条聊天消息" + (d.requests ? " · " + fmt(d.requests) + " 次已记录调用" : "") : fmt(d.requests) + " 次调用"}${daily ? "" : " · " + d.dayCount + " 个有记录的日期"}</span></div><div><small>Input</small><strong>${token(d.input, d)}</strong><span>含缓存输入 ${token(d.cached, d)}</span></div><div><small>Output</small><strong>${token(d.output, d)}</strong><span>含推理输出 ${token(d.reasoning, d)}</span></div></section>
+ ${chatNotice(d)}<section class="ai-section"><h3>${LABELS[kind]} Review</h3>${state ? `<p class="ai-state" role="status">${state}</p>` : ""}<div class="ai-review">${summaryHTML}</div></section>
+ ${d.total || d.messages ? `<section class="ai-section">${table("Agent", d.agents)}${table("Device", d.devices)}${table("Model", d.models)}<small class="hint">¹ 缓存输入已计入输入；推理输出已计入输出。</small></section><section class="ai-section"><details><summary>${daily ? "会话主题" : "主要会话主题"} · ${visibleActivities.length < d.sessionCount ? visibleActivities.length + " / " : ""}${d.sessionCount}</summary><ul class="ai-topics">${topics}</ul></details></section>` : ""}
 
 </div>${daily ? script : ""}`;
 }
@@ -189,9 +197,7 @@ function periodNav(date, active) {
       ([kind, label]) =>
         `<a href="${esc(url(date, kind))}"${active === kind ? ' aria-current="page"' : ""}>${label}</a>`,
     )
-    .join(
-      "",
-    )}</nav>`;
+    .join("")}</nav>`;
 }
 function renderStatus() {
   const { index, heartbeat } = getDay(today()),
@@ -208,7 +214,7 @@ function renderStatus() {
   return `<style>${CSS}</style><div class="ai-log"><section class="ai-section ai-sync"><h3>采集状态</h3><p class="ai-state" role="status">${stale ? "后台采集暂停" : bad ? "部分数据未更新" : "已同步"}</p>${sources
     .map(
       (s) =>
-        `<div class="ai-source"><p><strong>${esc(s.name)}</strong><span>${status(s.status)}</span></p><small>上次成功：${time(s.lastSuccess)}</small>${s.errors?.length ? `<p class="hint">${s.errors.reduce((n, e) => n + (e.count || 1), 0)} 条记录无法读取，已跳过</p>` : ""}<ul>${(
+        `<div class="ai-source"><p><strong>${esc(s.name)}</strong><span>${status(s.status)}</span></p><small>上次成功：${time(s.lastSuccess)}</small>${s.imported ? `<p class="hint">导出快照 · 记录截至 ${esc(s.coverageTo || "未知")}，新聊天需再次导入</p>` : ""}${s.errors?.length ? `<p class="hint">${s.errors.reduce((n, e) => n + (e.count || 1), 0)} 条记录无法读取，已跳过</p>` : ""}<ul>${(
           s.inventory || []
         )
           .filter((a) => a.status !== "not-found")

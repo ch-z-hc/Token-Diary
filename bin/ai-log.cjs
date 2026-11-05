@@ -23,6 +23,7 @@ const help = `Token-Diary — local AI usage and work journal
 
   ai-log init                  Write a stats-only configuration
   ai-log collect               Scan configured local/SSH/WSL/file sources
+  ai-log import-chatgpt PATH   Import a ChatGPT ZIP/JSON export or parts directory
   ai-log watch                 Collect every 5 minutes; optional closed-period reviews
   ai-log serve [--port 4317]    Read-only dashboard on 127.0.0.1
   ai-log review                Generate due reviews (explicit opt-in required)
@@ -79,6 +80,44 @@ async function main() {
   )
     throw new Error("Invalid period");
   switch (command) {
+    case "import-chatgpt": {
+      if (!positionals[1]) throw new Error("Provide a ChatGPT export path");
+      const source = {
+        id: "chatgpt",
+        name: "ChatGPT export",
+        type: "chatgpt",
+        path: path.resolve(positionals[1]),
+      };
+      const old = config.sources.find((s) => s.id === source.id);
+      if (old && old.type !== "chatgpt")
+        throw new Error("Source ID chatgpt is already in use");
+      await require("../src/collector.cjs").run(source, config); // Validate before changing configuration.
+      config.sources = config.sources
+        .filter((s) => s.id !== source.id)
+        .concat(source);
+      const result = await require("../src/collector.cjs").collect(config, {
+        only: source.id,
+      });
+      if (result.sources.chatgpt.status === "error")
+        throw new Error("ChatGPT import failed");
+      let raw = {};
+      try {
+        raw = JSON.parse(fs.readFileSync(configPath(), "utf8"));
+      } catch (e) {
+        if (e.code !== "ENOENT") throw e;
+        raw.dataDir = config.dataDir;
+      }
+      raw.sources = config.sources;
+      require("../src/core.cjs").atomic(configPath(), raw);
+      console.log(
+        JSON.stringify(
+          { source: result.sources.chatgpt, dates: result.dates.length },
+          null,
+          2,
+        ),
+      );
+      break;
+    }
     case "collect": {
       const result = await require("../src/collector.cjs").collect(config);
       console.log(
@@ -148,7 +187,9 @@ async function main() {
       const index = read(path.join(DIR, "index.json"), { dates: [] });
       const saved = read(path.join(DIR, "summaries.json"));
       const summaries = Object.fromEntries(
-        index.dates.filter((day) => saved[day.date]).map((day) => [day.date, saved[day.date]]),
+        index.dates
+          .filter((day) => saved[day.date])
+          .map((day) => [day.date, saved[day.date]]),
       );
       if (values.format === "markdown") {
         console.log("# Token-Diary\n");
@@ -157,8 +198,11 @@ async function main() {
             "## " +
               day.date +
               "\n\n" +
-              day.total +
-              " tokens\n\n" +
+              (day.messages && !day.requests
+                ? "Token 未知"
+                : day.total + " tokens") +
+              (day.messages ? " · " + day.messages + " 条聊天消息" : "") +
+              "\n\n" +
               (summaries[day.date]?.text || "") +
               "\n",
           );

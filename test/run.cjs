@@ -2,6 +2,7 @@ const { spawnSync } = require("node:child_process");
 const path = require("node:path");
 for (const file of [
   "accounting.cjs",
+  "chatgpt.cjs",
   "heatmap.cjs",
   "integration.cjs",
   "reviews.cjs",

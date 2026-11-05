@@ -28,8 +28,23 @@ function normalize(raw, config) {
       ["id", "agent", "session", "model"].map((k) => [k, text(e[k])]),
     );
     result.day = e.day;
+    if (e.kind === "chat-message") {
+      if (
+        !["user", "assistant"].includes(e.role) ||
+        typeof e.tokensKnown !== "boolean" ||
+        (e.role === "user" && e.tokensKnown)
+      )
+        throw new Error("Invalid chat message");
+      result.kind = e.kind;
+      result.role = e.role;
+      result.tokensKnown = e.tokensKnown;
+    }
     result.aliases = (Array.isArray(e.aliases) ? e.aliases : []).map(text);
     for (const k of ["input", "cached", "cacheWrite", "output", "reasoning"]) {
+      if (result.kind === "chat-message" && !result.tokensKnown) {
+        result[k] = null;
+        continue;
+      }
       const n = e[k] ?? 0;
       if (!Number.isSafeInteger(n) || n < 0)
         throw new Error("Invalid usage count");
@@ -62,6 +77,9 @@ function normalize(raw, config) {
     timezone: config.timezone,
     captureText: config.captureText,
     scannedAt: new Date().toISOString(),
+    imported: raw.imported === true,
+    coverageFrom: date(raw.coverageFrom) ? raw.coverageFrom : null,
+    coverageTo: date(raw.coverageTo) ? raw.coverageTo : null,
     events,
     sessions,
     inventory: raw.inventory.map((i) => ({
@@ -129,6 +147,10 @@ function commandFor(source) {
   return { command, args };
 }
 function run(source, config) {
+  if (source.type === "chatgpt")
+    return Promise.resolve(
+      normalize(require("./chatgpt.cjs").scan(source.path, config), config),
+    );
   if (source.type === "file") {
     let data = fs.readFileSync(path.resolve(source.path));
     if (source.path.endsWith(".gz"))
@@ -178,7 +200,7 @@ function run(source, config) {
     });
   });
 }
-async function collect(config = load()) {
+async function collect(config = load(), { only } = {}) {
   return withLock(path.join(DIR, "collect.lock"), async () => {
     const previous = read(path.join(DIR, "sources.json"));
     const states = Object.fromEntries(
@@ -186,7 +208,7 @@ async function collect(config = load()) {
         config.sources.some((s) => s.id === id),
       ),
     );
-    for (const source of config.sources) {
+    for (const source of config.sources.filter((s) => !only || s.id === only)) {
       const at = new Date().toISOString();
       try {
         const data = await run(source, config);
@@ -203,6 +225,9 @@ async function collect(config = load()) {
           inventory: data.inventory,
           errors: data.errors,
           events: data.events.length,
+          imported: data.imported,
+          coverageFrom: data.coverageFrom,
+          coverageTo: data.coverageTo,
         };
       } catch (e) {
         states[source.id] = {

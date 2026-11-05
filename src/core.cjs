@@ -11,8 +11,21 @@ const ZERO = () => ({
   reasoning: 0,
   total: 0,
   requests: 0,
+  messages: 0,
+  userMessages: 0,
+  assistantMessages: 0,
+  unknownUsage: 0,
 });
 function add(a, b) {
+  if (b.kind === "chat-message") {
+    a.messages++;
+    if (b.role === "user") a.userMessages++;
+    if (b.role === "assistant") a.assistantMessages++;
+    if (!b.tokensKnown) {
+      if (b.role === "assistant") a.unknownUsage++;
+      return a;
+    }
+  }
   for (const k of ["input", "cached", "cacheWrite", "output", "reasoning"])
     a[k] += b[k] || 0;
   a.total = a.input + a.output;
@@ -160,14 +173,33 @@ function build() {
   for (const d of Object.values(days))
     atomic(path.join(DIR, "days", d.date + ".json"), d);
   const dates = Object.values(days)
-    .map(({ date, total, input, cached, output, sessionCount }) => ({
-      date,
-      total,
-      input,
-      cached,
-      output,
-      sessionCount,
-    }))
+    .map(
+      ({
+        date,
+        total,
+        input,
+        cached,
+        output,
+        sessionCount,
+        requests,
+        messages,
+        userMessages,
+        assistantMessages,
+        unknownUsage,
+      }) => ({
+        date,
+        total,
+        input,
+        cached,
+        output,
+        sessionCount,
+        requests,
+        messages,
+        userMessages,
+        assistantMessages,
+        unknownUsage,
+      }),
+    )
     .sort((a, b) => b.date.localeCompare(a.date));
   const result = {
     updatedAt: new Date().toISOString(),

@@ -26,6 +26,8 @@ Token-Diary (formerly AI Log) is a local-first AI token usage and work journal. 
 - README demonstration screenshots use the owner’s website typography: Maple for Latin text/numbers and LXGW WenKai for Chinese. Render synthetic data, wait for webfonts to load and verify the actual rendered fonts before capture. Keep font files and owner-specific preview paths outside this repository unless runtime font support is explicitly requested.
 - The Home heatmap preview (`docs/home-full-year.png`) should show a complete past calendar year with synthetic activity across all 12 months, natural variation and a few gaps. Preserve exact totals for the synthetic records; never fill real missing or future usage to decorate a screenshot.
 
+- ChatGPT estimates appear inline in the existing stats, Agent / Device / Model tables and topics with `≈`; no separate ChatGPT card. Missing cache / reasoning data uses `—`. Keep measured and estimated values distinct.
+
 ## Invariants
 
 - ChatGPT visible-text estimates use local `o200k_base` on full original visible string parts, once per message: user = estimated input, assistant = estimated output. Aggregate estimates separately, track coverage, never add them to measured totals or heatmaps, and never change Review fingerprints for numeric estimates. Stats-only imports retain counts, not text.

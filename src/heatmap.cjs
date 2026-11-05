@@ -96,7 +96,7 @@ function renderHeatmap(index, year, date, homeDate) {
           (d.known
             ? Number(d.total).toLocaleString("en-US") + " tokens"
             : d.messages
-              ? "token 未知 · " + d.messages + " 条聊天消息"
+              ? d.messages + " 条聊天消息"
               : "暂无记录"),
         attrs = `class="ai-heatmap-cell${d.date === date ? " selected" : ""}" data-date="${d.date}" data-level="${d.level}" title="${label}" aria-label="${label}"`;
       return d.known || d.messages

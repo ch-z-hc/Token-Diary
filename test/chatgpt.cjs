@@ -339,24 +339,22 @@ function zip(entries) {
     atomic(path.join(DIR, "index.json"), index);
     buildPeriods(index);
     const html = require("../src/view.cjs").render("2024-02-29", "", "", "day");
-    assert(html.includes("<strong>未知</strong>"));
+    assert(!html.includes("token 未知"));
+    assert(!html.includes("ai-chat-estimates"));
     assert(html.includes("ai-chat-notice"));
-    assert(
-      html.includes('class="ai-chat-estimates"') ||
-        html.includes('class="ai-section ai-chat-estimates"'),
-    );
-    const estimates = html.match(
-      /<div class="ai-estimate-grid">(.*?)<\/div><\/section>/s,
-    )[1];
-    assert.deepEqual(
-      [...estimates.matchAll(/<strong>(.*?)<\/strong>/g)].map((m) => m[1]),
-      [outputEstimate, 0, outputEstimate].map(String),
-    );
-    const measured = html.match(
+    const stats = html.match(
       /<section class="ai-stats"[^>]*>(.*?)<\/section>/s,
     )[1];
-    assert.equal([...measured.matchAll(/<strong>未知<\/strong>/g)].length, 3);
-    assert(html.includes("实测合计"));
+    assert.deepEqual(
+      [...stats.matchAll(/<strong>(.*?)<\/strong>/g)].map((m) => m[1]),
+      [outputEstimate, 0, outputEstimate].map((n) => "≈ " + n),
+    );
+    assert(
+      html.includes(
+        `<th scope="row">ChatGPT</th><td>≈ 0</td><td>—</td><td>≈ ${outputEstimate}</td><td>≈ ${outputEstimate}</td>`,
+      ),
+    );
+    assert(html.includes("估算合计"));
     assert(html.includes("PRIVATE_RESULT") === false);
     assert(html.includes("ChatGPT"));
     assert(html.includes("会话主题"));
@@ -370,7 +368,7 @@ function zip(entries) {
     assert(
       heatmap
         .renderHeatmap(index, "2024", "2024-02-29", "2024-02-29")
-        .includes("token 未知"),
+        .includes("1 条聊天消息"),
     );
     console.log(
       "PASS chat-only UI and heatmap expose unknown usage rather than fabricated zero",

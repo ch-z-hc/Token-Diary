@@ -30,7 +30,7 @@ Token-Diary (formerly AI Log) is a local-first AI token usage and work journal. 
 
 - ChatGPT estimates appear inline in the existing stats, Agent / Device / Model tables and topics with `≈`; no separate ChatGPT card. Missing cache / reasoning data uses `—`. Keep measured and estimated values distinct.
 
-- Usage layout: three aligned metrics on desktop, stacked rows on narrow screens; keep counts in a full-width footer with indivisible label/value pairs. Do not put session/message/date metadata inside the Total column.
+- Usage layout: one table with Total / Input / Output columns and measured / ChatGPT rows; column headings, primary numbers and details share right edges. Stack source rows on narrow screens; distribute footer counts evenly, with indivisible label/value pairs. Do not put session/message/date metadata inside the Total column.
 
 ## Invariants
 

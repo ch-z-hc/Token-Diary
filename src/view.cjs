@@ -51,35 +51,25 @@ function token(key, u, includeEstimates = true) {
   return fmt(u[key]) + (includeEstimates && estimate ? " / " + estimate : "");
 }
 function stats(d, daily) {
-  const labels = d.messages
-    ? d.requests
-      ? ["实测合计", "实测输入", "实测输出"]
-      : ["估算合计", "估算输入", "估算输出"]
-    : ["Total tokens", "Input", "Output"];
-  const metrics = ["total", "input", "output"]
-    .map((key, i) => {
+  const columns = [
+    ["total", "合计"],
+    ["input", "输入"],
+    ["output", "输出"],
+  ];
+  const primary = columns
+    .map(([key, label]) => {
       const value = token(key, d, false);
-      const estimateKey = {
-        total: "estimatedTotal",
-        input: "estimatedInput",
-        output: "estimatedOutput",
-      }[key];
-      const detail = [];
-      if (d.requests && d.estimatedMessages)
-        detail.push(
-          `<span class="ai-stat-detail"><span>ChatGPT</span><span>≈ ${fmt(d[estimateKey])}</span></span>`,
-        );
-      if (key === "input")
-        detail.push(
-          `<span class="ai-stat-detail"><span>缓存输入</span><span>${token("cached", d, false)}</span></span>`,
-        );
-      if (key === "output")
-        detail.push(
-          `<span class="ai-stat-detail"><span>推理输出</span><span>${token("reasoning", d, false)}</span></span>`,
-        );
-      return `<div class="ai-stat"><small>${labels[i]}</small><strong${value.length > 17 ? ' class="ai-stat-long"' : ""}>${value}</strong><div class="ai-stat-details">${detail.join("")}</div></div>`;
+      return `<td data-label="${label}"><strong${value.length > 17 ? ' class="ai-stat-long"' : ""}>${value}</strong></td>`;
     })
     .join("");
+  const estimates =
+    d.requests && d.estimatedMessages
+      ? `<tr class="ai-estimated"><th scope="row">ChatGPT</th>${[d.estimatedTotal, d.estimatedInput, d.estimatedOutput].map((value, i) => `<td data-label="${columns[i][1]}">≈ ${fmt(value)}</td>`).join("")}</tr>`
+      : "";
+  const subsets =
+    d.requests || !d.messages
+      ? `<tr class="ai-subsets"><th scope="row"><span class="ai-visually-hidden">明细</span></th><td></td><td data-label="缓存输入"><span class="ai-sub-label">缓存 </span>${token("cached", d, false)}</td><td data-label="推理输出"><span class="ai-sub-label">推理 </span>${token("reasoning", d, false)}</td></tr>`
+      : "";
   const counts = [["会话", d.sessionCount]];
   if (d.requests || !d.messages) counts.push(["调用", d.requests]);
   if (d.messages)
@@ -88,7 +78,7 @@ function stats(d, daily) {
       ["助手回复", d.assistantMessages],
     );
   if (!daily) counts.push(["天数", d.dayCount]);
-  return `<section class="ai-stats" aria-label="Token 用量"><div class="ai-stat-grid">${metrics}</div><ul class="ai-usage-meta" aria-label="记录数量">${counts.map(([label, value]) => `<li><span>${label}</span><b>${fmt(value)}</b></li>`).join("")}</ul></section>`;
+  return `<section class="ai-stats" aria-label="Token 用量"><table class="ai-metrics"><thead><tr><th scope="col"><span class="ai-visually-hidden">来源</span></th>${columns.map(([, label]) => `<th scope="col">${label}</th>`).join("")}</tr></thead><tbody><tr class="ai-measured"><th scope="row">${d.messages && !d.requests ? "ChatGPT" : "实测"}</th>${primary}</tr>${subsets}${estimates}</tbody></table><ul class="ai-usage-meta" style="--meta-count:${counts.length}" aria-label="记录数量">${counts.map(([label, value]) => `<li><span>${label}</span><b>${fmt(value)}</b></li>`).join("")}</ul></section>`;
 }
 function rows(items) {
   return Object.entries(items)
@@ -277,7 +267,7 @@ function renderStatus() {
 }
 const urlAttr = esc;
 const CSS = `
-.ai-stats{border-block:1px solid var(--rule);padding-top:24px}.ai-stat-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px;padding-bottom:24px}.ai-stat{min-width:0}.ai-stat small{display:block;font-family:var(--font-ui);font-size:13px;color:var(--muted);margin-bottom:8px}.ai-stat strong{display:block;font-family:var(--font-ui);font-weight:500;font-size:clamp(20px,2.3vw,28px);line-height:1.4;letter-spacing:-.5px;font-variant-numeric:tabular-nums;white-space:nowrap}.ai-stat strong.ai-stat-long{font-size:20px}.ai-stat-details{display:grid;gap:6px;margin-top:14px}.ai-stat-detail{display:flex;justify-content:space-between;gap:8px;font-family:var(--font-ui);font-size:12px;line-height:1.6;color:var(--muted)}.ai-stat-detail>span{white-space:nowrap}.ai-stat-detail>span:last-child{font-variant-numeric:tabular-nums}.ai-usage-meta{display:flex;flex-wrap:wrap;gap:12px 28px;list-style:none;margin:0;padding:16px 0;border-top:1px dashed var(--rule);font-family:var(--font-ui);font-size:12px;color:var(--muted)}.ai-usage-meta li{display:flex;align-items:baseline;gap:8px;white-space:nowrap}.ai-usage-meta b{font-weight:500;color:var(--text,inherit);font-variant-numeric:tabular-nums}@media(max-width:900px){.ai-stat-grid{grid-template-columns:1fr;gap:20px}.ai-stat{display:grid;grid-template-columns:1fr auto;gap:8px 16px;align-items:baseline}.ai-stat small{margin:0}.ai-stat strong{text-align:right;font-size:28px}.ai-stat-details{grid-column:1/-1;margin:0;gap:4px}.ai-stat+.ai-stat{border-top:1px dashed var(--rule);padding-top:20px}.ai-usage-meta{gap:12px 24px}}@media(max-width:380px){.ai-stat{grid-template-columns:1fr}.ai-stat strong{text-align:left}.ai-stat-details{margin-top:4px}}
+.ai-stats{border-block:1px solid var(--rule)}.ai-metrics{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;padding:24px 0;font-family:var(--font-ui);font-variant-numeric:tabular-nums}.ai-metrics th,.ai-metrics td{text-align:right;vertical-align:baseline;padding:7px 0 7px 24px;white-space:nowrap;border:0;font-weight:400}.ai-metrics th:first-child{width:90px;text-align:left;padding-left:0;font-size:13px;color:var(--muted)}.ai-metrics thead th{font-size:13px;color:var(--muted);padding-top:0;padding-bottom:12px}.ai-metrics strong{font-weight:500;font-size:clamp(20px,2.2vw,28px);line-height:1.5;letter-spacing:-.5px;white-space:nowrap}.ai-metrics strong.ai-stat-long{font-size:18px}.ai-estimated td{font-size:14px;color:var(--muted)}.ai-metrics .ai-subsets td{font-size:12px;color:var(--muted);padding-top:2px}.ai-sub-label{margin-right:8px}.ai-usage-meta{display:grid;grid-template-columns:repeat(var(--meta-count),minmax(0,1fr));gap:20px;list-style:none;margin:0;padding:20px 0;border-top:1px solid var(--rule);font-family:var(--font-ui)}.ai-usage-meta li{display:grid;gap:6px;white-space:nowrap;text-align:right}.ai-usage-meta span{font-size:12px;color:var(--muted)}.ai-usage-meta b{font-size:17px;line-height:1.5;font-weight:500;font-variant-numeric:tabular-nums}.ai-visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}@media(max-width:900px){.ai-metrics{display:block;padding:8px 0 20px}.ai-metrics thead{display:none}.ai-metrics tbody{display:block}.ai-metrics tr{display:block;padding-top:16px}.ai-metrics tbody th:first-child{display:block;width:auto;padding:0 0 10px;font-size:13px}.ai-metrics td{display:flex;justify-content:space-between;gap:12px;padding:6px 0;align-items:baseline}.ai-metrics td:before{content:attr(data-label);font-size:13px;color:var(--muted);font-weight:400;letter-spacing:0}.ai-metrics strong{font-size:25px}.ai-metrics .ai-subsets{padding-top:8px}.ai-subsets th,.ai-subsets td:empty,.ai-sub-label{display:none!important}.ai-estimated{border-top:1px dashed var(--rule);margin-top:14px}.ai-usage-meta{grid-template-columns:repeat(3,minmax(0,1fr));gap:18px 12px;padding:18px 0}.ai-usage-meta li{text-align:left}}@media(max-width:380px){.ai-metrics strong{font-size:21px}.ai-metrics strong.ai-stat-long{font-size:15px}.ai-usage-meta{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .ai-period-tabs{align-items:center;display:flex;justify-content:center;flex-wrap:wrap;gap:4px;margin:0 0 16px;font-family:var(--font-ui);font-size:14px}.ai-period-tabs a{padding:10px;min-height:44px;border-radius:8px}.ai-period-tabs a[aria-current]{background:var(--soft);font-weight:700}.ai-range{text-align:center;font-size:14px;color:var(--muted);margin:20px 0}.ai-day-nav>:first-child{justify-self:start}.ai-day-nav>:nth-child(2){justify-self:center}.ai-day-nav>:last-child{justify-self:end}.ai-picker{width:100%}.ai-picker input{text-align:center}.ai-period-select{flex:1;min-width:0;width:100%;border:0;border-bottom:1px dashed var(--border);border-radius:0;background:transparent;padding:10px 8px;text-align:center;font:inherit;color:inherit;color-scheme:light}.ai-review-update button{font-size:14px}.ai-log{max-width:900px;margin:auto;text-align:left}.ai-picker{margin:0 auto;max-width:560px}.ai-picker>label{text-align:center}.ai-day-nav{display:grid;grid-template-columns:1fr auto 1fr;max-width:560px;width:100%;margin-inline:auto;gap:12px;font-family:var(--font-ui);font-size:13px;margin:4px auto 20px}.ai-section{margin-top:32px}.ai-section h3{text-align:left;margin:0 0 16px;font-size:19px}.ai-review p{line-height:1.95;margin:0 0 12px}.ai-state{color:var(--muted);font-size:14px}.ai-log summary{cursor:pointer;min-height:44px;line-height:44px}.ai-log details summary::marker{color:var(--muted)}.ai-table-wrap{overflow-x:auto;max-width:100%;margin:8px 0 16px}.ai-table-wrap table{width:100%;font-family:var(--font-ui);font-size:12px;border-collapse:collapse;white-space:nowrap}.ai-table-wrap th,.ai-table-wrap td{padding:10px 12px;text-align:right;border-bottom:1px solid var(--rule);font-weight:400;font-variant-numeric:tabular-nums}.ai-table-wrap th:first-child{text-align:left}.ai-topics{padding:0;list-style:none}.ai-topics li{padding:16px 0;border-bottom:1px dashed var(--rule)}.ai-topic-head{display:flex;justify-content:space-between;gap:12px;font-size:13px;color:var(--muted);font-family:var(--font-ui);overflow-wrap:anywhere}.ai-topics p{margin:8px 0;font-size:15px;overflow-wrap:anywhere}.ai-topics small,.ai-sync small{font-size:12px;color:var(--muted)}.ai-source{padding:8px 0 12px;border-bottom:1px dashed var(--rule)}.ai-source p{display:flex;justify-content:space-between;gap:12px;margin:8px 0;font-size:14px}.ai-source p strong{font-weight:400}.ai-source ul{font-size:12px;color:var(--muted);margin:8px 0;padding-left:20px}.ai-sync>.hint{display:block;margin-top:16px}.ai-page{max-width:1000px}@media(max-width:600px){.ai-period-tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:2px;font-size:12px}.ai-period-tabs a{text-align:center;padding:10px 2px}.ai-day-nav{font-size:12px;gap:6px}.ai-picker .summary-controls{gap:8px}}
 `;
 module.exports = {

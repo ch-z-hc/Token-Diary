@@ -355,7 +355,7 @@ function zip(entries) {
         `<th scope="row">ChatGPT</th><td>≈ 0</td><td>—</td><td>≈ ${outputEstimate}</td><td>≈ ${outputEstimate}</td>`,
       ),
     );
-    assert(html.includes("估算合计"));
+    assert(html.includes('data-label="合计"'));
     assert(html.includes("PRIVATE_RESULT") === false);
     assert(html.includes("ChatGPT"));
     assert(html.includes("会话主题"));

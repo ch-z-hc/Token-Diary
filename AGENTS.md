@@ -30,6 +30,8 @@ Token-Diary (formerly AI Log) is a local-first AI token usage and work journal. 
 
 - ChatGPT estimates appear inline in the existing stats, Agent / Device / Model tables and topics with `≈`; no separate ChatGPT card. Missing cache / reasoning data uses `—`. Keep measured and estimated values distinct.
 
+- Usage layout: three aligned metrics on desktop, stacked rows on narrow screens; keep counts in a full-width footer with indivisible label/value pairs. Do not put session/message/date metadata inside the Total column.
+
 ## Invariants
 
 - ChatGPT visible-text estimates use local `o200k_base` on full original visible string parts, once per message: user = estimated input, assistant = estimated output. Aggregate estimates separately, track coverage, never add them to measured totals or heatmaps, and never change Review fingerprints for numeric estimates. Stats-only imports retain counts, not text.

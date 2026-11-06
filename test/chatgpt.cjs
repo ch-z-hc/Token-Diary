@@ -341,7 +341,8 @@ function zip(entries) {
     const html = require("../src/view.cjs").render("2024-02-29", "", "", "day");
     assert(!html.includes("token 未知"));
     assert(!html.includes("ai-chat-estimates"));
-    assert(html.includes("ai-chat-notice"));
+    assert(html.includes("ai-usage-meta"));
+    assert(!html.includes("<span>调用</span><b>0</b>"));
     const stats = html.match(
       /<section class="ai-stats"[^>]*>(.*?)<\/section>/s,
     )[1];

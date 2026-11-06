@@ -35,7 +35,11 @@ const LABELS = {
 };
 const url = (date, kind = "day") =>
   "/ai/?date=" + date + (kind === "day" ? "" : "&period=" + kind);
-const agentName = name => ({"AI Log（自动回顾）": "AI Log", "Diary Summary（自动生成）": "Diary Summary"})[name] || name;
+const agentName = (name) =>
+  ({
+    "AI Log（自动回顾）": "AI Log",
+    "Diary Summary（自动生成）": "Diary Summary",
+  })[name] || name;
 function token(key, u, includeEstimates = true) {
   const field = {
     input: "estimatedInput",
@@ -46,20 +50,45 @@ function token(key, u, includeEstimates = true) {
   if (u.messages && !u.requests) return estimate || "—";
   return fmt(u[key]) + (includeEstimates && estimate ? " / " + estimate : "");
 }
-function inlineEstimate(key, d) {
-  const field = {
-    input: "estimatedInput",
-    output: "estimatedOutput",
-    total: "estimatedTotal",
-  }[key];
-  return d.requests && d.estimatedMessages
-    ? `<span>ChatGPT ≈ ${fmt(d[field])}</span>`
-    : "";
-}
-function chatNotice(d) {
-  return d.messages
-    ? `<p class="ai-state ai-chat-notice">ChatGPT：${fmt(d.userMessages)} 条用户消息 · ${fmt(d.assistantMessages)} 条助手回复</p>`
-    : "";
+function stats(d, daily) {
+  const labels = d.messages
+    ? d.requests
+      ? ["实测合计", "实测输入", "实测输出"]
+      : ["估算合计", "估算输入", "估算输出"]
+    : ["Total tokens", "Input", "Output"];
+  const metrics = ["total", "input", "output"]
+    .map((key, i) => {
+      const value = token(key, d, false);
+      const estimateKey = {
+        total: "estimatedTotal",
+        input: "estimatedInput",
+        output: "estimatedOutput",
+      }[key];
+      const detail = [];
+      if (d.requests && d.estimatedMessages)
+        detail.push(
+          `<span class="ai-stat-detail"><span>ChatGPT</span><span>≈ ${fmt(d[estimateKey])}</span></span>`,
+        );
+      if (key === "input")
+        detail.push(
+          `<span class="ai-stat-detail"><span>缓存输入</span><span>${token("cached", d, false)}</span></span>`,
+        );
+      if (key === "output")
+        detail.push(
+          `<span class="ai-stat-detail"><span>推理输出</span><span>${token("reasoning", d, false)}</span></span>`,
+        );
+      return `<div class="ai-stat"><small>${labels[i]}</small><strong${value.length > 17 ? ' class="ai-stat-long"' : ""}>${value}</strong><div class="ai-stat-details">${detail.join("")}</div></div>`;
+    })
+    .join("");
+  const counts = [["会话", d.sessionCount]];
+  if (d.requests || !d.messages) counts.push(["调用", d.requests]);
+  if (d.messages)
+    counts.push(
+      ["用户消息", d.userMessages],
+      ["助手回复", d.assistantMessages],
+    );
+  if (!daily) counts.push(["天数", d.dayCount]);
+  return `<section class="ai-stats" aria-label="Token 用量"><div class="ai-stat-grid">${metrics}</div><ul class="ai-usage-meta" aria-label="记录数量">${counts.map(([label, value]) => `<li><span>${label}</span><b>${fmt(value)}</b></li>`).join("")}</ul></section>`;
 }
 function rows(items) {
   return Object.entries(items)
@@ -201,8 +230,8 @@ function render(date, picker, script, kind = "day") {
       ? ""
       : `<nav class="ai-day-nav" aria-label="日期导航">${previous ? `<a href="${urlAttr(url(previous.from, kind))}">← ${daily ? previous.id : "上一" + unit}</a>` : "<span></span>"}<a href="${urlAttr(url(today(), kind))}">${daily ? "Today" : kind === "year" ? "今年" : "本" + unit}</a>${next ? `<a href="${urlAttr(url(next.from, kind))}">${daily ? next.id : "下一" + unit} →</a>` : "<span></span>"}</nav>`;
   return `<style>${CSS}</style><div class="ai-log">${periodNav(date, kind)}${kind === "total" ? "" : `<form class="summary-picker ai-picker" method="get" action="/ai/"><label class="sr-only" for="ai-date">Choose a ${daily ? "Day" : { week: "Week", month: "Month", year: "Year" }[kind]}</label>${daily ? "" : `<input type="hidden" name="period" value="${kind}">`}<div class="summary-controls">${picker}<button type="submit">View</button></div></form>`}${nav}${range ? `<p class="ai-range">${range}</p>` : ""}
- <section class="ai-stats" aria-label="Token 用量"><div><small>${d.messages ? (d.requests ? "实测合计" : "估算合计") : "Total tokens"}</small><strong>${token("total", d, false)}</strong>${inlineEstimate("total", d)}<span>${d.sessionCount} 个会话 · ${d.messages ? fmt(d.messages) + " 条聊天消息" + (d.requests ? " · " + fmt(d.requests) + " 次已记录调用" : "") : fmt(d.requests) + " 次调用"}${daily ? "" : " · " + d.dayCount + " 个有记录的日期"}</span></div><div><small>${d.messages ? (d.requests ? "实测输入" : "估算输入") : "Input"}</small><strong>${token("input", d, false)}</strong>${inlineEstimate("input", d)}<span>含缓存输入 ${token("cached", d, false)}</span></div><div><small>${d.messages ? (d.requests ? "实测输出" : "估算输出") : "Output"}</small><strong>${token("output", d, false)}</strong>${inlineEstimate("output", d)}<span>含推理输出 ${token("reasoning", d, false)}</span></div></section>
- ${chatNotice(d)}<section class="ai-section"><h3>${LABELS[kind]} Review</h3>${state ? `<p class="ai-state" role="status">${state}</p>` : ""}<div class="ai-review">${summaryHTML}</div></section>
+ ${stats(d, daily)}
+ <section class="ai-section"><h3>${LABELS[kind]} Review</h3>${state ? `<p class="ai-state" role="status">${state}</p>` : ""}<div class="ai-review">${summaryHTML}</div></section>
  ${d.total || d.messages ? `<section class="ai-section">${table("Agent", d.agents)}${table("Device", d.devices)}${table("Model", d.models)}</section><section class="ai-section"><details><summary>${daily ? "会话主题" : "主要会话主题"} · ${visibleActivities.length < d.sessionCount ? visibleActivities.length + " / " : ""}${d.sessionCount}</summary><ul class="ai-topics">${topics}</ul></details></section>` : ""}
 
 </div>${daily ? script : ""}`;
@@ -248,7 +277,8 @@ function renderStatus() {
 }
 const urlAttr = esc;
 const CSS = `
-.ai-period-tabs{align-items:center;display:flex;justify-content:center;flex-wrap:wrap;gap:4px;margin:0 0 16px;font-family:var(--font-ui);font-size:14px}.ai-period-tabs a{padding:10px;min-height:44px;border-radius:8px}.ai-period-tabs a[aria-current]{background:var(--soft);font-weight:700}.ai-range{text-align:center;font-size:14px;color:var(--muted);margin:20px 0}.ai-day-nav>:first-child{justify-self:start}.ai-day-nav>:nth-child(2){justify-self:center}.ai-day-nav>:last-child{justify-self:end}.ai-picker{width:100%}.ai-picker input{text-align:center}.ai-period-select{flex:1;min-width:0;width:100%;border:0;border-bottom:1px dashed var(--border);border-radius:0;background:transparent;padding:10px 8px;text-align:center;font:inherit;color:inherit;color-scheme:light}.ai-review-update button{font-size:14px}.ai-log{max-width:900px;margin:auto;text-align:left}.ai-picker{margin:0 auto;max-width:560px}.ai-picker>label{text-align:center}.ai-day-nav{display:grid;grid-template-columns:1fr auto 1fr;max-width:560px;width:100%;margin-inline:auto;gap:12px;font-family:var(--font-ui);font-size:13px;margin:4px auto 20px}.ai-stats{display:grid;grid-template-columns:1.3fr 1fr 1fr;border-block:1px dashed var(--rule);padding:24px 0;gap:16px}.ai-stats>div{min-width:0}.ai-stats small{display:block;font-family:var(--font-ui);font-size:13px;color:var(--muted)}.ai-stats strong{display:block;font-family:var(--font-ui);font-weight:500;font-size:clamp(20px,2.3vw,29px);letter-spacing:-.5px;line-height:1.6;font-variant-numeric:tabular-nums}.ai-stats span{display:block;font-size:12px;color:var(--muted)}.ai-section{margin-top:32px}.ai-section h3{text-align:left;margin:0 0 16px;font-size:19px}.ai-review p{line-height:1.95;margin:0 0 12px}.ai-state{color:var(--muted);font-size:14px}.ai-log summary{cursor:pointer;min-height:44px;line-height:44px}.ai-log details summary::marker{color:var(--muted)}.ai-table-wrap{overflow-x:auto;max-width:100%;margin:8px 0 16px}.ai-table-wrap table{width:100%;font-family:var(--font-ui);font-size:12px;border-collapse:collapse;white-space:nowrap}.ai-table-wrap th,.ai-table-wrap td{padding:10px 12px;text-align:right;border-bottom:1px solid var(--rule);font-weight:400;font-variant-numeric:tabular-nums}.ai-table-wrap th:first-child{text-align:left}.ai-topics{padding:0;list-style:none}.ai-topics li{padding:16px 0;border-bottom:1px dashed var(--rule)}.ai-topic-head{display:flex;justify-content:space-between;gap:12px;font-size:13px;color:var(--muted);font-family:var(--font-ui);overflow-wrap:anywhere}.ai-topics p{margin:8px 0;font-size:15px;overflow-wrap:anywhere}.ai-topics small,.ai-sync small{font-size:12px;color:var(--muted)}.ai-source{padding:8px 0 12px;border-bottom:1px dashed var(--rule)}.ai-source p{display:flex;justify-content:space-between;gap:12px;margin:8px 0;font-size:14px}.ai-source p strong{font-weight:400}.ai-source ul{font-size:12px;color:var(--muted);margin:8px 0;padding-left:20px}.ai-sync>.hint{display:block;margin-top:16px}.ai-page{max-width:1000px}@media(max-width:600px){.ai-period-tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:2px;font-size:12px}.ai-period-tabs a{text-align:center;padding:10px 2px}.ai-stats{grid-template-columns:1fr 1fr;gap:18px 12px}.ai-stats>div:first-child{grid-column:1/-1}.ai-stats>div:first-child strong{font-size:34px}.ai-stats strong{font-size:clamp(16px,4.5vw,23px)}.ai-day-nav{font-size:12px;gap:6px}.ai-picker .summary-controls{gap:8px}}
+.ai-stats{border-block:1px solid var(--rule);padding-top:24px}.ai-stat-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px;padding-bottom:24px}.ai-stat{min-width:0}.ai-stat small{display:block;font-family:var(--font-ui);font-size:13px;color:var(--muted);margin-bottom:8px}.ai-stat strong{display:block;font-family:var(--font-ui);font-weight:500;font-size:clamp(20px,2.3vw,28px);line-height:1.4;letter-spacing:-.5px;font-variant-numeric:tabular-nums;white-space:nowrap}.ai-stat strong.ai-stat-long{font-size:20px}.ai-stat-details{display:grid;gap:6px;margin-top:14px}.ai-stat-detail{display:flex;justify-content:space-between;gap:8px;font-family:var(--font-ui);font-size:12px;line-height:1.6;color:var(--muted)}.ai-stat-detail>span{white-space:nowrap}.ai-stat-detail>span:last-child{font-variant-numeric:tabular-nums}.ai-usage-meta{display:flex;flex-wrap:wrap;gap:12px 28px;list-style:none;margin:0;padding:16px 0;border-top:1px dashed var(--rule);font-family:var(--font-ui);font-size:12px;color:var(--muted)}.ai-usage-meta li{display:flex;align-items:baseline;gap:8px;white-space:nowrap}.ai-usage-meta b{font-weight:500;color:var(--text,inherit);font-variant-numeric:tabular-nums}@media(max-width:900px){.ai-stat-grid{grid-template-columns:1fr;gap:20px}.ai-stat{display:grid;grid-template-columns:1fr auto;gap:8px 16px;align-items:baseline}.ai-stat small{margin:0}.ai-stat strong{text-align:right;font-size:28px}.ai-stat-details{grid-column:1/-1;margin:0;gap:4px}.ai-stat+.ai-stat{border-top:1px dashed var(--rule);padding-top:20px}.ai-usage-meta{gap:12px 24px}}@media(max-width:380px){.ai-stat{grid-template-columns:1fr}.ai-stat strong{text-align:left}.ai-stat-details{margin-top:4px}}
+.ai-period-tabs{align-items:center;display:flex;justify-content:center;flex-wrap:wrap;gap:4px;margin:0 0 16px;font-family:var(--font-ui);font-size:14px}.ai-period-tabs a{padding:10px;min-height:44px;border-radius:8px}.ai-period-tabs a[aria-current]{background:var(--soft);font-weight:700}.ai-range{text-align:center;font-size:14px;color:var(--muted);margin:20px 0}.ai-day-nav>:first-child{justify-self:start}.ai-day-nav>:nth-child(2){justify-self:center}.ai-day-nav>:last-child{justify-self:end}.ai-picker{width:100%}.ai-picker input{text-align:center}.ai-period-select{flex:1;min-width:0;width:100%;border:0;border-bottom:1px dashed var(--border);border-radius:0;background:transparent;padding:10px 8px;text-align:center;font:inherit;color:inherit;color-scheme:light}.ai-review-update button{font-size:14px}.ai-log{max-width:900px;margin:auto;text-align:left}.ai-picker{margin:0 auto;max-width:560px}.ai-picker>label{text-align:center}.ai-day-nav{display:grid;grid-template-columns:1fr auto 1fr;max-width:560px;width:100%;margin-inline:auto;gap:12px;font-family:var(--font-ui);font-size:13px;margin:4px auto 20px}.ai-section{margin-top:32px}.ai-section h3{text-align:left;margin:0 0 16px;font-size:19px}.ai-review p{line-height:1.95;margin:0 0 12px}.ai-state{color:var(--muted);font-size:14px}.ai-log summary{cursor:pointer;min-height:44px;line-height:44px}.ai-log details summary::marker{color:var(--muted)}.ai-table-wrap{overflow-x:auto;max-width:100%;margin:8px 0 16px}.ai-table-wrap table{width:100%;font-family:var(--font-ui);font-size:12px;border-collapse:collapse;white-space:nowrap}.ai-table-wrap th,.ai-table-wrap td{padding:10px 12px;text-align:right;border-bottom:1px solid var(--rule);font-weight:400;font-variant-numeric:tabular-nums}.ai-table-wrap th:first-child{text-align:left}.ai-topics{padding:0;list-style:none}.ai-topics li{padding:16px 0;border-bottom:1px dashed var(--rule)}.ai-topic-head{display:flex;justify-content:space-between;gap:12px;font-size:13px;color:var(--muted);font-family:var(--font-ui);overflow-wrap:anywhere}.ai-topics p{margin:8px 0;font-size:15px;overflow-wrap:anywhere}.ai-topics small,.ai-sync small{font-size:12px;color:var(--muted)}.ai-source{padding:8px 0 12px;border-bottom:1px dashed var(--rule)}.ai-source p{display:flex;justify-content:space-between;gap:12px;margin:8px 0;font-size:14px}.ai-source p strong{font-weight:400}.ai-source ul{font-size:12px;color:var(--muted);margin:8px 0;padding-left:20px}.ai-sync>.hint{display:block;margin-top:16px}.ai-page{max-width:1000px}@media(max-width:600px){.ai-period-tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:2px;font-size:12px}.ai-period-tabs a{text-align:center;padding:10px 2px}.ai-day-nav{font-size:12px;gap:6px}.ai-picker .summary-controls{gap:8px}}
 `;
 module.exports = {
   render,

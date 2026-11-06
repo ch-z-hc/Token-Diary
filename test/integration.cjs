@@ -269,7 +269,7 @@ let server;
     atomic(path.join(DIR, "period-summaries.json"), {
       "month:2026-01": { text: "REMOVED_PERIOD_REVIEW", hash: "old" },
     });
-    assert.match(require("../src/view.cjs").render("2026-01-02", "", ""), /Review 已停止生成，保留已有回顾/);
+    assert.match(require("../src/view.cjs").render("2026-01-02", "", ""), /Review updates disabled/);
     fs.writeFileSync(file, JSON.stringify({ ...snapshot, events: [], sessions: [] }));
     config.sources = [{ id: "replacement", type: "file", path: file }];
     index = await collect(config);

@@ -342,7 +342,7 @@ function zip(entries) {
     assert(!html.includes("token 未知"));
     assert(!html.includes("ai-chat-estimates"));
     assert(html.includes("ai-usage-meta"));
-    assert(!html.includes("<span>调用</span><b>0</b>"));
+    assert(!html.includes("<span>Calls</span><b>0</b>"));
     const stats = html.match(
       /<section class="ai-stats"[^>]*>(.*?)<\/section>/s,
     )[1];
@@ -355,10 +355,10 @@ function zip(entries) {
         `<th scope="row">ChatGPT</th><td>0</td><td>—</td><td>${outputEstimate}</td><td>${outputEstimate}</td>`,
       ),
     );
-    assert(html.includes('data-label="合计"'));
+    assert(html.includes('data-label="Total"'));
     assert(html.includes("PRIVATE_RESULT") === false);
     assert(html.includes("ChatGPT"));
-    assert(html.includes("会话主题"));
+    assert(html.includes("Session topics"));
     const heatmap = require("../src/heatmap.cjs");
     const cell = heatmap
       .calendar("2024", index.dates, "2024-03-01")
@@ -369,7 +369,7 @@ function zip(entries) {
     assert(
       heatmap
         .renderHeatmap(index, "2024", "2024-02-29", "2024-02-29")
-        .includes("1 条聊天消息"),
+        .includes("1 chat message"),
     );
     console.log(
       "PASS chat-only UI and heatmap expose unknown usage rather than fabricated zero",

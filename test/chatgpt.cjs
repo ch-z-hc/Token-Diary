@@ -348,11 +348,11 @@ function zip(entries) {
     )[1];
     assert.deepEqual(
       [...stats.matchAll(/<strong>(.*?)<\/strong>/g)].map((m) => m[1]),
-      [outputEstimate, 0, outputEstimate].map((n) => "≈ " + n),
+      [outputEstimate, 0, outputEstimate].map(String),
     );
     assert(
       html.includes(
-        `<th scope="row">ChatGPT</th><td>≈ 0</td><td>—</td><td>≈ ${outputEstimate}</td><td>≈ ${outputEstimate}</td>`,
+        `<th scope="row">ChatGPT</th><td>0</td><td>—</td><td>${outputEstimate}</td><td>${outputEstimate}</td>`,
       ),
     );
     assert(html.includes('data-label="合计"'));

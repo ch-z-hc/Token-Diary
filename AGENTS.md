@@ -28,9 +28,9 @@ Token-Diary (formerly AI Log) is a local-first AI token usage and work journal. 
 - README demonstration screenshots use the owner’s website typography: Maple for Latin text/numbers and LXGW WenKai for Chinese. Render synthetic data, wait for webfonts to load and verify the actual rendered fonts before capture. Keep font files and owner-specific preview paths outside this repository unless runtime font support is explicitly requested.
 - The Home heatmap preview (`docs/home-full-year.png`) should show a complete past calendar year with synthetic activity across all 12 months, natural variation and a few gaps. Preserve exact totals for the synthetic records; never fill real missing or future usage to decorate a screenshot.
 
-- ChatGPT estimates appear inline in the existing stats, Agent / Device / Model tables and topics with `≈`; no separate ChatGPT card. Missing cache / reasoning data uses `—`. Keep measured and estimated values distinct.
+- ChatGPT estimates appear inline in the existing stats, Agent / Device / Model tables and topics without an approximation sign; no separate ChatGPT card. Missing cache / reasoning data uses `—`. Keep measured and estimated values distinct.
 
-- Usage layout: one table with Total / Input / Output columns and measured / ChatGPT rows; column headings, primary numbers and details share right edges. Stack source rows on narrow screens; distribute footer counts evenly, with indivisible label/value pairs. Do not put session/message/date metadata inside the Total column.
+- Usage layout: one table with Total / Input / Output columns and Token / ChatGPT rows, with matching number sizes; column headings, primary numbers and details share right edges. Stack source rows on narrow screens; distribute footer counts evenly, with indivisible label/value pairs. Do not put session/message/date metadata inside the Total column.
 
 ## Invariants
 
